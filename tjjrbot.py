@@ -39,15 +39,15 @@ class Bot(object):
         self.__nick = kwargs["nick"]
         self.__port = kwargs["port"]
         self.__server = kwargs["server"]
-        self.__irclog_file=kwargs.get("irclog_file", sys.stdout)
+        self.__logfile=kwargs.get("logfile", sys.stdout)
 
         self.__oldbuf = ""
         self.__ircmsgs = []
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    def __log_ircmsg(self, msg):
+    def __log(self, name, msg):
         timestamp = datetime.datetime.utcnow().isoformat()
-        print(timestamp, msg, file=self.__irclog_file)
+        print(timestamp, name, msg, file=self.__logfile)
 
     def __recv_ircmsgs(self):
         # Concatenate old and new bufs.
@@ -59,7 +59,7 @@ class Bot(object):
                 # Save the incomplete msg for later concatenation.
                 self.__oldbuf = msg
                 break
-            self.__log_ircmsg(msg)
+            self.__log("IRC", msg)
 
             prefix = ""
 
@@ -85,7 +85,7 @@ class Bot(object):
     def __send_ircmsg(self, msg):
         if len(msg) > MAX_MSG_LEN:
             raise Error("message is too long")
-        self.__log_ircmsg(msg)
+        self.__log("IRC", msg)
         self.__sock.sendall("%s%s" % (msg, CRLF))
 
     def __send_ircmsg_privmsg(self, text):
@@ -154,7 +154,7 @@ def main():
         nick="tjjrbot",
         channel="#tjjrbot",
         registration_timeout=60,
-        irclog_file=open("tjjrbot.irc.log", "a", 1),
+        logfile=open("tjjrbot.log", "a", 1),
     )
     bot.start()
 
