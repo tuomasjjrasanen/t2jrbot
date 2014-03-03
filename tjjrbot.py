@@ -34,6 +34,7 @@ class Error(Exception):
 class Bot(object):
 
     def __init__(self, **kwargs):
+        self.__channel = kwargs.get("channel")
         self.__registration_timeout = kwargs.get("registration_timeout", 0)
         self.__nick = kwargs["nick"]
         self.__port = kwargs["port"]
@@ -86,6 +87,16 @@ class Bot(object):
             raise Error("message is too long")
         self.__log_ircmsg(msg)
         self.__sock.sendall("%s%s" % (msg, CRLF))
+
+    def __send_ircmsg_privmsg(self, text):
+        head = "PRIVMSG %s :" % self.__channel
+        max_tail_len = MAX_MSG_LEN - len(head)
+
+        i = 0
+        while i < len(text):
+            tail = text[i:i+max_tail_len]
+            self.__send_ircmsg("%s%s" % (head, tail))
+            i += len(tail)
 
     def __wait_ircrpl(self, expected_cmd, timeout=None):
         next_timeout = timeout
@@ -141,6 +152,7 @@ def main():
         server="irc.elisa.fi",
         port=6667,
         nick="tjjrbot",
+        channel="#tjjrbot",
         registration_timeout=60,
         irclog_file=open("tjjrbot.irc.log", "a", 1),
     )
