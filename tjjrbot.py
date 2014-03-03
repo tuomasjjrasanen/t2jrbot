@@ -19,70 +19,132 @@
 
 from __future__ import print_function
 
+import datetime
 import select
 import socket
 import sys
+import time
 
-MAX_SEND_LEN = 510
+MAX_MSG_LEN = 510
+CRLF = "\r\n"
 
-def recv(sock):
-    msg = sock.recv(512)
-    print(msg, end="")
-    return msg
+class Error(Exception):
+    pass
 
-def handle_msg(sock, msg):
-    if msg_tail.startswith("PING "):
-        ping_server = msg_tail.split()[1]
-        send_pong(sock, ping_server)
+class Bot(object):
 
-def send(sock, msg):
-    msg = "%s\r\n" % msg[:MAX_SEND_LEN]
-    print(msg, end="")
-    sock.send(msg)
+    def __init__(self, **kwargs):
+        self.__registration_timeout = kwargs.get("registration_timeout", 0)
+        self.__nick = kwargs["nick"]
+        self.__port = kwargs["port"]
+        self.__server = kwargs["server"]
+        self.__irclog_file=kwargs.get("irclog_file", sys.stdout)
 
-def send_join(sock, channel):
-    send(sock, "JOIN %s" % channel)
+        self.__oldbuf = ""
+        self.__ircmsgs = []
+        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-def send_nick(sock, nick):
-    send(sock, "NICK %s" % nick)
+    def __log_ircmsg(self, msg):
+        timestamp = datetime.datetime.utcnow().isoformat()
+        print(timestamp, msg, file=self.__irclog_file)
 
-def send_pong(sock, ping_server):
-    send(sock, "PONG %s" % ping_server)
+    def __recv_ircmsgs(self):
+        # Concatenate old and new bufs.
+        buf = self.__oldbuf + self.__sock.recv(4096)
 
-def send_privmsg(sock, target, text):
-    head = "PRIVMSG %s :" % target
-    max_tail_len = MAX_SEND_LEN - len(head)
+        while True:
+            msg, sep, buf = buf.partition(CRLF)
+            if sep != CRLF:
+                # Save the incomplete msg for later concatenation.
+                self.__oldbuf = msg
+                break
+            self.__log_ircmsg(msg)
 
-    i = 0
-    while i < len(text):
-        tail = text[i:i+max_tail_len]
-        send("%s%s" % (head, tail))
-        i += len(tail)
+            prefix = ""
 
-def send_user(sock, user, mode=8, realname=None):
-    if realname is None:
-        realname = user
-    send(sock, "USER %s %d * :%s" % (user, mode, realname))
+            if msg.startswith(":"):
+                prefix, sep, msg = msg.partition(" ")
+                if sep != " ":
+                    raise Error("malformed prefixed message")
 
-def main(nick, channel, server, port=6667):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            cmd, _, params = msg.partition(" ")
 
-    sock.connect((server, port))
+            self.__ircmsgs.append((prefix, cmd, params))
 
-    send_user(sock, nick)
-    send_nick(sock, nick)
-    send_join(sock, channel)
+    def __handle_ircmsgs(self):
+        while self.__ircmsgs:
+            prefix, cmd, params = self.__ircmsgs.pop()
 
-    while True:
-        rs, ws, es = select.select([sock, sys.stdin], [], [])
+            if cmd == "ERROR":
+                raise Error(params)
 
-        if sock in rs:
-            msg = recv(sock)
-            handle_msg(sock, msg)
+            elif cmd == "PING":
+                self.__send_ircmsg("PONG %s" % self.__nick)
 
-        # All 
-        if sys.stdin in rs:
-            send_privmsg(sock, channel, sys.stdin.readline())
+    def __send_ircmsg(self, msg):
+        if len(msg) > MAX_MSG_LEN:
+            raise Error("message is too long")
+        self.__log_ircmsg(msg)
+        self.__sock.sendall("%s%s" % (msg, CRLF))
+
+    def __wait_ircrpl(self, expected_cmd, timeout=None):
+        next_timeout = timeout
+        start_time = time.time()
+        while True:
+            rs, ws, es = select.select([self.__sock], [], [], next_timeout)
+
+            # Timeout
+            if rs == ws == es == []:
+                return False
+
+            if timeout is not None:
+                next_timeout = max(0, start_time + timeout - time.time())
+
+            self.__recv_ircmsgs()
+            for _, cmd, _ in self.__ircmsgs:
+                if cmd == expected_cmd:
+                    return True
+
+        raise RuntimeError("impossible code path")
+
+    def __del__(self):
+        self.__sock.close()
+
+    def start(self):
+        self.__sock.connect((self.__server, self.__port))
+        try:
+            start_time = time.time()
+
+            # Register connection.
+            self.__send_ircmsg("NICK %s" % self.__nick)
+            self.__send_ircmsg("USER %s 0 * :%s" % (self.__nick, self.__nick))
+            if not self.__wait_ircrpl("001", timeout=self.__registration_timeout):
+                raise Error("connection registration timeout")
+
+            while True:
+                rs, _, _ = select.select([self.__sock], [], [], 1)
+
+                # Handle messages server has sent to us.
+                if self.__sock in rs:
+                    # Read socket buffer, parse messages and push them
+                    # to the message buffer.
+                    self.__recv_ircmsgs()
+
+                    # Handle messages in the message buffer.
+                    self.__handle_ircmsgs()
+
+        finally:
+            self.__sock.shutdown(socket.SHUT_RDWR)
+
+def main():
+    bot = Bot(
+        server="irc.elisa.fi",
+        port=6667,
+        nick="tjjrbot",
+        registration_timeout=60,
+        irclog_file=open("tjjrbot.irc.log", "a", 1),
+    )
+    bot.start()
 
 if __name__ == "__main__":
-    main("tjjrbot", "#tjjrtjjr", "irc.elisa.fi")
+    main()
