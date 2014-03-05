@@ -85,8 +85,8 @@ class Bot(object):
         self.__log("IRC", msg)
         self.__sock.sendall("%s%s" % (msg, CRLF))
 
-    def __send_ircmsg_privmsg(self, text):
-        head = "PRIVMSG %s :" % self.__channel
+    def __send_ircmsg_privmsg(self, target, text):
+        head = "PRIVMSG %s :" % target
         max_tail_len = MAX_MSG_LEN - len(head)
 
         i = 0
@@ -123,7 +123,6 @@ def main():
         server="irc.elisa.fi",
         port=6667,
         nick="tjjrbot",
-        channel="#tjjrbot",
         logfile=open("tjjrbot.log", "a", 1),
     )
     bot.start()
