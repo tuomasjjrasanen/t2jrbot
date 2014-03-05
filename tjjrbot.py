@@ -47,8 +47,12 @@ class Bot(object):
         print(timestamp, name, msg, file=self.__logfile)
 
     def __recv_ircmsgs(self):
+        newbuf = self.__sock.recv(4096)
+        if not newbuf:
+            raise Error("connected reset by peer")
+
         # Concatenate old and new bufs.
-        buf = self.__oldbuf + self.__sock.recv(4096)
+        buf = self.__oldbuf + newbuf
 
         while True:
             msg, sep, buf = buf.partition(CRLF)
