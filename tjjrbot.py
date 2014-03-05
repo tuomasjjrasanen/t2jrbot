@@ -23,7 +23,6 @@ import datetime
 import select
 import socket
 import sys
-import time
 
 MAX_MSG_LEN = 510
 CRLF = "\r\n"
@@ -34,8 +33,6 @@ class Error(Exception):
 class Bot(object):
 
     def __init__(self, **kwargs):
-        self.__channel = kwargs.get("channel")
-        self.__registration_timeout = kwargs.get("registration_timeout", 0)
         self.__nick = kwargs["nick"]
         self.__port = kwargs["port"]
         self.__server = kwargs["server"]
@@ -98,51 +95,25 @@ class Bot(object):
             self.__send_ircmsg("%s%s" % (head, tail))
             i += len(tail)
 
-    def __wait_ircrpl(self, expected_cmd, timeout=None):
-        next_timeout = timeout
-        start_time = time.time()
-        while True:
-            rs, ws, es = select.select([self.__sock], [], [], next_timeout)
-
-            # Timeout
-            if rs == ws == es == []:
-                return False
-
-            if timeout is not None:
-                next_timeout = max(0, start_time + timeout - time.time())
-
-            self.__recv_ircmsgs()
-            for _, cmd, _ in self.__ircmsgs:
-                if cmd == expected_cmd:
-                    return True
-
-        raise RuntimeError("impossible code path")
-
     def __del__(self):
         self.__sock.close()
 
     def start(self):
         self.__sock.connect((self.__server, self.__port))
         try:
-            start_time = time.time()
-
             # Register connection.
             self.__send_ircmsg("NICK %s" % self.__nick)
             self.__send_ircmsg("USER %s 0 * :%s" % (self.__nick, self.__nick))
-            if not self.__wait_ircrpl("001", timeout=self.__registration_timeout):
-                raise Error("connection registration timeout")
 
             while True:
-                rs, _, _ = select.select([self.__sock], [], [], 1)
+                rs, _, _ = select.select([self.__sock], [], [])
 
-                # Handle messages server has sent to us.
-                if self.__sock in rs:
-                    # Read socket buffer, parse messages and push them
-                    # to the message buffer.
-                    self.__recv_ircmsgs()
+                # Read socket buffer, parse messages and push them to
+                # the message buffer.
+                self.__recv_ircmsgs()
 
-                    # Handle messages in the message buffer.
-                    self.__handle_ircmsgs()
+                # Handle messages in the message buffer.
+                self.__handle_ircmsgs()
 
         finally:
             self.__sock.shutdown(socket.SHUT_RDWR)
@@ -153,7 +124,6 @@ def main():
         port=6667,
         nick="tjjrbot",
         channel="#tjjrbot",
-        registration_timeout=60,
         logfile=open("tjjrbot.log", "a", 1),
     )
     bot.start()
