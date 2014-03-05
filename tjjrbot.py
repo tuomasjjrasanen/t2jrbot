@@ -65,6 +65,7 @@ class Bot(object):
 
             if msg.startswith(":"):
                 prefix, sep, msg = msg.partition(" ")
+                prefix = prefix[1:]
                 if sep != " ":
                     raise Error("malformed prefixed message")
 
