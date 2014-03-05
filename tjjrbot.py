@@ -39,7 +39,6 @@ class Bot(object):
         self.__logfile=kwargs.get("logfile", sys.stdout)
 
         self.__oldbuf = ""
-        self.__ircmsgs = []
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def __log(self, name, msg):
@@ -80,12 +79,6 @@ class Bot(object):
                     param, _, paramstr = paramstr.partition(" ")
                 params.append(param)
 
-            self.__ircmsgs.append((prefix, cmd, params))
-
-    def __handle_ircmsgs(self):
-        while self.__ircmsgs:
-            prefix, cmd, params = self.__ircmsgs.pop(0)
-
             if cmd == "ERROR":
                 raise Error(params)
 
@@ -121,12 +114,8 @@ class Bot(object):
             while True:
                 rs, _, _ = select.select([self.__sock], [], [])
 
-                # Read socket buffer, parse messages and push them to
-                # the message buffer.
+                # Read socket buffer, parse messages and handle them.
                 self.__recv_ircmsgs()
-
-                # Handle messages in the message buffer.
-                self.__handle_ircmsgs()
 
         finally:
             self.__sock.shutdown(socket.SHUT_RDWR)
