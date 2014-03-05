@@ -69,7 +69,16 @@ class Bot(object):
                 if sep != " ":
                     raise Error("malformed prefixed message")
 
-            cmd, _, params = msg.partition(" ")
+            cmd, _, paramstr = msg.partition(" ")
+
+            params = []
+            while paramstr:
+                if paramstr.startswith(":"):
+                    param = paramstr[1:]
+                    paramstr = ""
+                else:
+                    param, _, paramstr = paramstr.partition(" ")
+                params.append(param)
 
             self.__ircmsgs.append((prefix, cmd, params))
 
