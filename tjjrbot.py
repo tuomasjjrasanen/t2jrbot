@@ -84,7 +84,7 @@ class Bot(object):
 
     def __handle_ircmsgs(self):
         while self.__ircmsgs:
-            prefix, cmd, params = self.__ircmsgs.pop()
+            prefix, cmd, params = self.__ircmsgs.pop(0)
 
             if cmd == "ERROR":
                 raise Error(params)
