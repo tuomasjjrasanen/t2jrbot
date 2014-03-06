@@ -41,6 +41,10 @@ class Bot(object):
         self.__oldbuf = ""
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+        self.__botcmds = {
+            "!help": (self.__botcmd_help, "show help"),
+        }
+
     def __log(self, name, msg):
         timestamp = datetime.datetime.utcnow().isoformat()
         print(timestamp, name, msg, file=self.__logfile)
@@ -85,6 +89,44 @@ class Bot(object):
 
             elif cmd == "PING":
                 self.__send_ircmsg("PONG %s" % self.__nick)
+
+            elif cmd == "PRIVMSG":
+                self.__recv_ircmsg_privmsg(prefix, *params)
+
+    def __botcmd_help(self, prefix, target, cmd, argstr):
+        self.__reply(prefix, target, "List of commands:")
+        for name in self.__botcmds:
+            _, description = self.__botcmds[name]
+            self.__reply(prefix, target, "%s - %s" % (name, description))
+
+    def __reply(self, prefix, target, text):
+        from_nick, sep, from_host = prefix.partition("!")
+
+        if target != self.__nick:
+            response_text = "%s: %s" % (from_nick, text)
+            response_target = target
+        else:
+            response_text = text
+            response_target = "%s!%s" % (from_nick, from_host)
+
+        self.__send_ircmsg_privmsg(response_target, response_text)
+
+    def __recv_ircmsg_privmsg(self, prefix, target, text):
+        if target != self.__nick and text.startswith("%s:" % self.__nick):
+            # Channel conversation directed to me, strip my nick from
+            # the beginning of the text.
+            text = text[len("%s:" % self.__nick):].lstrip()
+
+        if not text.startswith("!"):
+            return
+
+        cmd, _, argstr = text.partition(' ')
+        try:
+            botcmd, _ = self.__botcmds[cmd]
+        except KeyError:
+            pass
+        else:
+            botcmd(prefix, target, cmd, argstr)
 
     def __send_ircmsg(self, msg):
         if len(msg) > MAX_MSG_LEN:
