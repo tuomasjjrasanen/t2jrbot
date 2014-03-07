@@ -36,6 +36,7 @@ class Bot(object):
         self.__nick = kwargs["nick"]
         self.__port = kwargs["port"]
         self.__server = kwargs["server"]
+        self.__channel = kwargs["channel"]
         self.__logfile=kwargs.get("logfile", sys.stdout)
 
         self.__oldbuf = ""
@@ -92,6 +93,9 @@ class Bot(object):
 
             elif cmd == "PRIVMSG":
                 self.__recv_ircmsg_privmsg(prefix, *params)
+
+            elif cmd == "001" and self.__channel:
+                self.__send_ircmsg("JOIN %s" % self.__channel)
 
     def __botcmd_help(self, prefix, target, cmd, argstr):
         self.__reply(prefix, target, "List of commands:")
@@ -168,6 +172,7 @@ def main():
         server="irc.elisa.fi",
         port=6667,
         nick="tjjrbot",
+        channel="#tjjrtjjr",
         logfile=open("tjjrbot.log", "a", 1),
     )
     bot.start()
