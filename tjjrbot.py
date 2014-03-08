@@ -44,7 +44,7 @@ class Bot(object):
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self.__botcmds = {
-            "!help": (self.__botcmd_help, "show help"),
+            "!help": (self.__botcmd_help, "make me be tellin' ye me tricks"),
             "!say": (self.__botcmd_say,
                      "make me shout somethin' to th' channel on ye behalf"),
         }
@@ -176,7 +176,7 @@ class Bot(object):
 
     def __botcmd_help(self, nick, host, cmd, argstr):
         self.__send_ircmsg_privmsg(self.__channel,
-                                   "%s: List of commands:" % nick)
+                                   "%s: List o' me tricks:" % nick)
         for name in self.__botcmds:
             _, description = self.__botcmds[name]
             self.__send_ircmsg_privmsg(self.__channel,
