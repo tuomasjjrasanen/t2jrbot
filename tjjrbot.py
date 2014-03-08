@@ -64,7 +64,7 @@ class Bot(object):
 
     def __send_ircmsg(self, msg):
         if len(msg) > MAX_MSG_LEN:
-            raise Error("message is too long")
+            raise Error("message is too long to send", len(msg))
         self.__log("=>IRC", msg)
         self.__sock.sendall("%s%s" % (msg, CRLF))
 
@@ -81,7 +81,7 @@ class Bot(object):
     def __recv_ircmsgs(self):
         newbuf = self.__sock.recv(4096)
         if not newbuf:
-            raise Error("connected reset by peer")
+            raise Error("receive failed, connection reset by peer")
 
         # Concatenate old and new bufs.
         buf = self.__oldbuf + newbuf
@@ -100,7 +100,7 @@ class Bot(object):
                 prefix, sep, msg = msg.partition(" ")
                 prefix = prefix[1:]
                 if sep != " ":
-                    raise Error("malformed prefixed message")
+                    raise Error("received message has malformed prefix", sep)
 
             cmd, _, paramstr = msg.partition(" ")
 
@@ -114,7 +114,7 @@ class Bot(object):
                 params.append(param)
 
             if cmd == "ERROR":
-                raise Error(params)
+                raise Error("received ERROR from the server", params)
 
             elif cmd == "PING":
                 self.__send_ircmsg("PONG %s" % self.__nick)
