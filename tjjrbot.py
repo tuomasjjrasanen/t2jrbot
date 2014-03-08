@@ -46,9 +46,37 @@ class Bot(object):
             "!help": (self.__botcmd_help, "show help"),
         }
 
-    def __log(self, name, msg):
-        timestamp = datetime.datetime.utcnow().isoformat()
-        print(timestamp, name, msg, file=self.__logfile)
+    def start(self):
+        self.__sock.connect((self.__server, self.__port))
+        try:
+            # Register connection.
+            self.__send_ircmsg("NICK %s" % self.__nick)
+            self.__send_ircmsg("USER %s 0 * :%s" % (self.__nick, self.__nick))
+
+            while True:
+                rs, _, _ = select.select([self.__sock], [], [])
+
+                # Read socket buffer, parse messages and handle them.
+                self.__recv_ircmsgs()
+
+        finally:
+            self.__sock.shutdown(socket.SHUT_RDWR)
+
+    def __send_ircmsg(self, msg):
+        if len(msg) > MAX_MSG_LEN:
+            raise Error("message is too long")
+        self.__log("IRC", msg)
+        self.__sock.sendall("%s%s" % (msg, CRLF))
+
+    def __send_ircmsg_privmsg(self, target, text):
+        head = "PRIVMSG %s :" % target
+        max_tail_len = MAX_MSG_LEN - len(head)
+
+        i = 0
+        while i < len(text):
+            tail = text[i:i+max_tail_len]
+            self.__send_ircmsg("%s%s" % (head, tail))
+            i += len(tail)
 
     def __recv_ircmsgs(self):
         newbuf = self.__sock.recv(4096)
@@ -97,14 +125,13 @@ class Bot(object):
             elif cmd == "001":
                 self.__send_ircmsg("JOIN %s" % self.__channel)
 
-    def __botcmd_help(self, nick, host, cmd, argstr):
-        self.__send_ircmsg_privmsg(self.__channel,
-                                   "%s: List of commands:" % nick)
-        for name in self.__botcmds:
-            _, description = self.__botcmds[name]
-            self.__send_ircmsg_privmsg(self.__channel,
-                                       "%s: %s - %s"
-                                       % (nick, name, description))
+    def __recv_ircmsg_privmsg(self, prefix, target, text):
+        nick, sep, host = prefix.partition("!")
+
+        if target == self.__nick:
+            self.__recv_ircmsg_privmsg_user(nick, host, text)
+        else:
+            self.__recv_ircmsg_privmsg_chan(nick, host, text)
 
     def __recv_ircmsg_privmsg_chan(self, nick, host, text):
         # Ignore all leading whitespaces.
@@ -131,48 +158,21 @@ class Bot(object):
         # ignored.
         pass
 
-    def __recv_ircmsg_privmsg(self, prefix, target, text):
-        nick, sep, host = prefix.partition("!")
+    def __botcmd_help(self, nick, host, cmd, argstr):
+        self.__send_ircmsg_privmsg(self.__channel,
+                                   "%s: List of commands:" % nick)
+        for name in self.__botcmds:
+            _, description = self.__botcmds[name]
+            self.__send_ircmsg_privmsg(self.__channel,
+                                       "%s: %s - %s"
+                                       % (nick, name, description))
 
-        if target == self.__nick:
-            self.__recv_ircmsg_privmsg_user(nick, host, text)
-        else:
-            self.__recv_ircmsg_privmsg_chan(nick, host, text)
-
-    def __send_ircmsg(self, msg):
-        if len(msg) > MAX_MSG_LEN:
-            raise Error("message is too long")
-        self.__log("IRC", msg)
-        self.__sock.sendall("%s%s" % (msg, CRLF))
-
-    def __send_ircmsg_privmsg(self, target, text):
-        head = "PRIVMSG %s :" % target
-        max_tail_len = MAX_MSG_LEN - len(head)
-
-        i = 0
-        while i < len(text):
-            tail = text[i:i+max_tail_len]
-            self.__send_ircmsg("%s%s" % (head, tail))
-            i += len(tail)
+    def __log(self, name, msg):
+        timestamp = datetime.datetime.utcnow().isoformat()
+        print(timestamp, name, msg, file=self.__logfile)
 
     def __del__(self):
         self.__sock.close()
-
-    def start(self):
-        self.__sock.connect((self.__server, self.__port))
-        try:
-            # Register connection.
-            self.__send_ircmsg("NICK %s" % self.__nick)
-            self.__send_ircmsg("USER %s 0 * :%s" % (self.__nick, self.__nick))
-
-            while True:
-                rs, _, _ = select.select([self.__sock], [], [])
-
-                # Read socket buffer, parse messages and handle them.
-                self.__recv_ircmsgs()
-
-        finally:
-            self.__sock.shutdown(socket.SHUT_RDWR)
 
 def main():
     bot = Bot(
