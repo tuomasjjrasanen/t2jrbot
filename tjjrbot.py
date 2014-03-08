@@ -97,40 +97,47 @@ class Bot(object):
             elif cmd == "001" and self.__channel:
                 self.__send_ircmsg("JOIN %s" % self.__channel)
 
-    def __botcmd_help(self, prefix, target, cmd, argstr):
-        self.__reply(prefix, target, "List of commands:")
+    def __botcmd_help(self, from_nick, from_host, cmd, argstr):
+        self.__send_ircmsg_privmsg(self.__channel,
+                                   "%s: List of commands:" % from_nick)
         for name in self.__botcmds:
             _, description = self.__botcmds[name]
-            self.__reply(prefix, target, "%s - %s" % (name, description))
+            self.__send_ircmsg_privmsg(self.__channel,
+                                       "%s: %s - %s"
+                                       % (from_nick, name, description))
 
-    def __reply(self, prefix, target, text):
-        from_nick, sep, from_host = prefix.partition("!")
+    def __recv_ircmsg_privmsg_chan(self, from_nick, from_host, text):
+        # Ignore all leading whitespaces.
+        text = text.lstrip()
 
-        if target != self.__nick:
-            response_text = "%s: %s" % (from_nick, text)
-            response_target = target
-        else:
-            response_text = text
-            response_target = "%s!%s" % (from_nick, from_host)
-
-        self.__send_ircmsg_privmsg(response_target, response_text)
-
-    def __recv_ircmsg_privmsg(self, prefix, target, text):
-        if target != self.__nick and text.startswith("%s:" % self.__nick):
-            # Channel conversation directed to me, strip my nick from
-            # the beginning of the text.
-            text = text[len("%s:" % self.__nick):].lstrip()
-
-        if not text.startswith("!"):
+        if not text.startswith("%s:" % self.__nick):
+            # The message is not designated to me, ignore.
             return
 
-        cmd, _, argstr = text.partition(' ')
+        # Strip my nick from the beginning of the text.
+        cmdstr = text[len("%s:" % self.__nick):].lstrip()
+
+        cmd, _, argstr = cmdstr.partition(' ')
         try:
             botcmd, _ = self.__botcmds[cmd]
         except KeyError:
-            pass
+            # Silently ignore all but commands.
+            return
+
+        botcmd(from_nick, from_host, cmd, argstr)
+
+    def __recv_ircmsg_privmsg_user(self, from_nick, from_host, text):
+        # User-private messages are not supported and are silently
+        # ignored.
+        pass
+
+    def __recv_ircmsg_privmsg(self, prefix, target, text):
+        from_nick, sep, from_host = prefix.partition("!")
+
+        if target == self.__nick:
+            self.__recv_ircmsg_privmsg_user(from_nick, from_host, text)
         else:
-            botcmd(prefix, target, cmd, argstr)
+            self.__recv_ircmsg_privmsg_chan(from_nick, from_host, text)
 
     def __send_ircmsg(self, msg):
         if len(msg) > MAX_MSG_LEN:
