@@ -44,6 +44,8 @@ class Bot(object):
 
         self.__botcmds = {
             "!help": (self.__botcmd_help, "show help"),
+            "!say": (self.__botcmd_say,
+                     "make me shout somethin' to th' channel on ye behalf"),
         }
 
     def start(self):
@@ -163,6 +165,10 @@ class Bot(object):
             self.__send_ircmsg_privmsg(self.__channel,
                                        "%s: %s - %s"
                                        % (nick, name, description))
+
+    def __botcmd_say(self, nick, host, cmd, argstr):
+        self.__send_ircmsg_privmsg(self.__channel, argstr)
+        self.__send_ircmsg_privmsg(self.__channel, "-- %s" % nick)
 
     def __log(self, name, msg):
         timestamp = datetime.datetime.utcnow().isoformat()
