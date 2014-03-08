@@ -127,6 +127,12 @@ class Bot(object):
             elif cmd == "001":
                 self.__send_ircmsg("JOIN %s" % self.__channel)
 
+            elif cmd == "JOIN":
+                self.__send_ircmsg_privmsg(self.__channel,
+                                           "Hi-ho! I be knowin' couple o' "
+                                           "tricks. Just ask fer !help if ye "
+                                           "be interested, aye?")
+
     def __recv_ircmsg_privmsg(self, prefix, target, text):
         nick, sep, host = prefix.partition("!")
 
