@@ -49,7 +49,9 @@ class Bot(object):
                      "make me shout somethin' to th' channel on ye behalf"),
         }
 
-        self.__admin_botcmds = ()
+        self.__admin_botcmds = (
+            "!say",
+        )
 
     def start(self):
         self.__sock.connect((self.__server, self.__port))
