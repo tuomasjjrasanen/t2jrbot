@@ -129,9 +129,11 @@ class Bot(object):
         nick, sep, host = prefix.partition("!")
 
         if target == self.__nick:
-            self.__recv_ircmsg_privmsg_user(nick, host, text)
-        else:
-            self.__recv_ircmsg_privmsg_chan(nick, host, text)
+            # User-private messages are not supported and are silently
+            # ignored.
+            return
+
+        self.__recv_ircmsg_privmsg_chan(nick, host, text)
 
     def __recv_ircmsg_privmsg_chan(self, nick, host, text):
         # Ignore all leading whitespaces.
@@ -152,11 +154,6 @@ class Bot(object):
             return
 
         botcmd(nick, host, cmd, argstr)
-
-    def __recv_ircmsg_privmsg_user(self, nick, host, text):
-        # User-private messages are not supported and are silently
-        # ignored.
-        pass
 
     def __botcmd_help(self, nick, host, cmd, argstr):
         self.__send_ircmsg_privmsg(self.__channel,
