@@ -94,7 +94,7 @@ class Bot(object):
             elif cmd == "PRIVMSG":
                 self.__recv_ircmsg_privmsg(prefix, *params)
 
-            elif cmd == "001" and self.__channel:
+            elif cmd == "001":
                 self.__send_ircmsg("JOIN %s" % self.__channel)
 
     def __botcmd_help(self, nick, host, cmd, argstr):
