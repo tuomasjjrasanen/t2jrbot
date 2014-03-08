@@ -38,6 +38,7 @@ class Bot(object):
         self.__server = kwargs["server"]
         self.__channel = kwargs["channel"]
         self.__logfile=kwargs.get("logfile", sys.stdout)
+        self.__admins = kwargs.get("admins", ())
 
         self.__oldbuf = ""
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -47,6 +48,8 @@ class Bot(object):
             "!say": (self.__botcmd_say,
                      "make me shout somethin' to th' channel on ye behalf"),
         }
+
+        self.__admin_botcmds = ()
 
     def start(self):
         self.__sock.connect((self.__server, self.__port))
@@ -161,6 +164,12 @@ class Bot(object):
             # Silently ignore all but commands.
             return
 
+        if not self.__admin_check(nick, host, cmd):
+            self.__send_ircmsg_privmsg(self.__channel,
+                                       "%s: Ye bilge rat! I obey only me Cap'n!"
+                                       % nick)
+            return
+
         botcmd(nick, host, cmd, argstr)
 
     def __botcmd_help(self, nick, host, cmd, argstr):
@@ -175,6 +184,16 @@ class Bot(object):
     def __botcmd_say(self, nick, host, cmd, argstr):
         self.__send_ircmsg_privmsg(self.__channel, argstr)
         self.__send_ircmsg_privmsg(self.__channel, "-- %s" % nick)
+
+    def __admin_check(self, nick, host, cmd):
+        if cmd not in self.__admin_botcmds:
+            return True
+
+        for admin_nick, admin_host in self.__admins:
+            if nick == admin_nick and host == admin_host:
+                return True
+
+        return False
 
     def __log(self, name, msg):
         timestamp = datetime.datetime.utcnow().isoformat()
