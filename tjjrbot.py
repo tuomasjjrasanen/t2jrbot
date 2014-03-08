@@ -65,7 +65,7 @@ class Bot(object):
     def __send_ircmsg(self, msg):
         if len(msg) > MAX_MSG_LEN:
             raise Error("message is too long")
-        self.__log("IRC", msg)
+        self.__log("=>IRC", msg)
         self.__sock.sendall("%s%s" % (msg, CRLF))
 
     def __send_ircmsg_privmsg(self, target, text):
@@ -92,7 +92,7 @@ class Bot(object):
                 # Save the incomplete msg for later concatenation.
                 self.__oldbuf = msg
                 break
-            self.__log("IRC", msg)
+            self.__log("<=IRC", msg)
 
             prefix = ""
 
