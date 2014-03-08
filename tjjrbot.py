@@ -97,16 +97,16 @@ class Bot(object):
             elif cmd == "001" and self.__channel:
                 self.__send_ircmsg("JOIN %s" % self.__channel)
 
-    def __botcmd_help(self, from_nick, from_host, cmd, argstr):
+    def __botcmd_help(self, nick, host, cmd, argstr):
         self.__send_ircmsg_privmsg(self.__channel,
-                                   "%s: List of commands:" % from_nick)
+                                   "%s: List of commands:" % nick)
         for name in self.__botcmds:
             _, description = self.__botcmds[name]
             self.__send_ircmsg_privmsg(self.__channel,
                                        "%s: %s - %s"
-                                       % (from_nick, name, description))
+                                       % (nick, name, description))
 
-    def __recv_ircmsg_privmsg_chan(self, from_nick, from_host, text):
+    def __recv_ircmsg_privmsg_chan(self, nick, host, text):
         # Ignore all leading whitespaces.
         text = text.lstrip()
 
@@ -124,20 +124,20 @@ class Bot(object):
             # Silently ignore all but commands.
             return
 
-        botcmd(from_nick, from_host, cmd, argstr)
+        botcmd(nick, host, cmd, argstr)
 
-    def __recv_ircmsg_privmsg_user(self, from_nick, from_host, text):
+    def __recv_ircmsg_privmsg_user(self, nick, host, text):
         # User-private messages are not supported and are silently
         # ignored.
         pass
 
     def __recv_ircmsg_privmsg(self, prefix, target, text):
-        from_nick, sep, from_host = prefix.partition("!")
+        nick, sep, host = prefix.partition("!")
 
         if target == self.__nick:
-            self.__recv_ircmsg_privmsg_user(from_nick, from_host, text)
+            self.__recv_ircmsg_privmsg_user(nick, host, text)
         else:
-            self.__recv_ircmsg_privmsg_chan(from_nick, from_host, text)
+            self.__recv_ircmsg_privmsg_chan(nick, host, text)
 
     def __send_ircmsg(self, msg):
         if len(msg) > MAX_MSG_LEN:
