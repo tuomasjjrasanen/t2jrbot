@@ -44,9 +44,8 @@ class Bot(object):
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self.__botcmds = {
-            "!help": (self.__botcmd_help, "make me be tellin' ye me tricks"),
-            "!say": (self.__botcmd_say,
-                     "make me shout somethin' to th' channel on ye behalf"),
+            "!help": (self.__botcmd_help, "show help"),
+            "!say": (self.__botcmd_say, "say something to the channel"),
         }
 
         self.__admin_botcmds = (
@@ -134,9 +133,7 @@ class Bot(object):
 
             elif cmd == "JOIN":
                 self.__send_ircmsg_privmsg(self.__channel,
-                                           "Hi-ho! I be knowin' couple o' "
-                                           "tricks. Just ask fer !help if ye "
-                                           "be interested, aye?")
+                                           "USAGE: %s: !help" % self.__nick)
 
     def __recv_ircmsg_privmsg(self, prefix, target, text):
         nick, sep, host = prefix.partition("!")
@@ -168,15 +165,15 @@ class Bot(object):
 
         if not self.__admin_check(nick, host, cmd):
             self.__send_ircmsg_privmsg(self.__channel,
-                                       "%s: Ye bilge rat! I obey only me Cap'n!"
-                                       % nick)
+                                       "%s: only admin is allowed to %s"
+                                       % (nick, cmd))
             return
 
         botcmd(nick, host, cmd, argstr)
 
     def __botcmd_help(self, nick, host, cmd, argstr):
         self.__send_ircmsg_privmsg(self.__channel,
-                                   "%s: List o' me tricks:" % nick)
+                                   "%s: List of commands:" % nick)
         for name in self.__botcmds:
             _, description = self.__botcmds[name]
             self.__send_ircmsg_privmsg(self.__channel,
