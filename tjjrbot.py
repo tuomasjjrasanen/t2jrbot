@@ -191,7 +191,7 @@ class Bot(object):
 
         if not self.__admin_check(nick, host, cmd):
             self.send_ircmsg_privmsg(self.__channel,
-                                     "%s: only admin is allowed to %s"
+                                     "%s: only admins are allowed to %s"
                                      % (nick, cmd))
             return
 
