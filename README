@@ -1,0 +1,42 @@
+=========
+ t2jrbot
+=========
+
+Simple but elegant IRC bot.
+
+:Author: Tuomas Räsänen <tuomasjjrasanen@tjjr.fi>
+
+:License: GPLv3+
+
+:Homepage: http://tjjr.fi/sw/t2jrbot
+
+Requirements
+============
+
+- Python2.7
+
+Installation
+============
+
+::
+
+  python setup.py build
+  sudo python setup.py install
+
+Usage
+=====
+
+To launch the bot, run::
+
+  t2jrbot --admin 'nick!user@example.org' \
+          --port 6667 \
+          --nick myt2jrbot \
+          irc.example.org '#mychannel'
+
+Then, in ``#mychannel``, write
+
+::
+
+  myt2jrbot: !help
+
+to get help.
