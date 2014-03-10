@@ -22,6 +22,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import hashlib
 
 import t2jrbot
 
@@ -58,8 +59,8 @@ def parse_args():
                         help="address of the server which bot connects to")
     parser.add_argument("channel", metavar="CHANNEL",
                         help="channel which bot joins after a connection is established")
-    parser.add_argument("-n", "--nick", default="t2jrbot",
-                        help="nickname of the bot, default='t2jrbot'")
+    parser.add_argument("-n", "--nick", default=None,
+                        help="nickname of the bot")
     parser.add_argument("-a", "--admin", action="append", dest="admins",
                         type=parse_admin_arg, metavar="ADMIN",
                         help="admin of the bot (e.g. 'nick!user@example.org'), "
@@ -68,6 +69,12 @@ def parse_args():
 
 def main():
     options = parse_args()
+
+    if options.nick is None:
+        md5 = hashlib.md5()
+        md5.update(options.server)
+        md5.update(options.channel)
+        options.nick = "t2jrbot_%s" % md5.hexdigest()
 
     bot = t2jrbot.Bot(options.server, options.port, options.nick, options.channel)
 
