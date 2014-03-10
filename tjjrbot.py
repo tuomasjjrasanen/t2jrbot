@@ -210,7 +210,6 @@ def main():
         port=6667,
         nick="tjjrbot",
         channel="#tjjrtjjr",
-        logfile=open("tjjrbot.log", "a", 1),
     )
     bot.register_command("!help", command_help, "show help", require_admin=False)
     bot.register_command("!say", command_say, "say something to the channel")
