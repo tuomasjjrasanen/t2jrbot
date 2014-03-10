@@ -75,12 +75,6 @@ class Bot(object):
         finally:
             self.__sock.shutdown(socket.SHUT_RDWR)
 
-    def __send_ircmsg(self, msg):
-        if len(msg) > MAX_MSG_LEN:
-            raise Error("message is too long to send", len(msg))
-        self.__log("=>IRC", msg)
-        self.__sock.sendall("%s%s" % (msg, CRLF))
-
     def send_ircmsg_privmsg(self, target, text):
         head = "PRIVMSG %s :" % target
         max_tail_len = MAX_MSG_LEN - len(head)
@@ -90,6 +84,12 @@ class Bot(object):
             tail = text[i:i+max_tail_len]
             self.__send_ircmsg("%s%s" % (head, tail))
             i += len(tail)
+
+    def __send_ircmsg(self, msg):
+        if len(msg) > MAX_MSG_LEN:
+            raise Error("message is too long to send", len(msg))
+        self.__log("=>IRC", msg)
+        self.__sock.sendall("%s%s" % (msg, CRLF))
 
     def __recv_ircmsgs(self):
         newbuf = self.__sock.recv(4096)
