@@ -38,7 +38,8 @@ class Bot(object):
         self.__server = kwargs["server"]
         self.__channel = kwargs["channel"]
         self.__logfile=kwargs.get("logfile", sys.stdout)
-        self.__admins = kwargs.get("admins", ())
+
+        self.__admins = set()
 
         self.__oldbuf = ""
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -50,6 +51,9 @@ class Bot(object):
     @property
     def command_descriptions(self):
         return dict(self.__botcmd_descriptions)
+
+    def add_admin(self, nick, host):
+        self.__admins.add((nick, host))
 
     def register_command(self, cmd, handler, description="", require_admin=True):
         if cmd in self.__botcmd_handlers:
@@ -182,11 +186,7 @@ class Bot(object):
         if cmd not in self.__admin_botcmds:
             return True
 
-        for admin_nick, admin_host in self.__admins:
-            if nick == admin_nick and host == admin_host:
-                return True
-
-        return False
+        return (nick, host) in self.__admins
 
     def __log(self, name, msg):
         timestamp = datetime.datetime.utcnow().isoformat()
