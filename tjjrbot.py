@@ -49,6 +49,10 @@ class Bot(object):
         self.__admin_botcmds = set()
 
     @property
+    def admins(self):
+        return set(self.__admins)
+
+    @property
     def command_descriptions(self):
         return dict(self.__botcmd_descriptions)
 
