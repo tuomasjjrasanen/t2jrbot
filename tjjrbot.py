@@ -147,7 +147,7 @@ class Bot(object):
 
             elif cmd == "JOIN":
                 self.send_ircmsg_privmsg(self.__channel,
-                                           "USAGE: %s: !help" % self.__nick)
+                                         "USAGE: %s: !help" % self.__nick)
 
     def __recv_ircmsg_privmsg(self, prefix, target, text):
         nick, sep, host = prefix.partition("!")
@@ -179,8 +179,8 @@ class Bot(object):
 
         if not self.__admin_check(nick, host, cmd):
             self.send_ircmsg_privmsg(self.__channel,
-                                       "%s: only admin is allowed to %s"
-                                       % (nick, cmd))
+                                     "%s: only admin is allowed to %s"
+                                     % (nick, cmd))
             return
 
         botcmd_handler(self, nick, host, self.__channel, cmd, argstr)
