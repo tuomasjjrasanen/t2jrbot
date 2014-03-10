@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# tjjrbot - simple but elegant IRC bot
+# t2jrbot - simple but elegant IRC bot
 # Copyright © 2014 Tuomas Räsänen <tuomasjjrasanen@tjjr.fi>
 #
 # This program is free software: you can redistribute it and/or modify

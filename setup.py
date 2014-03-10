@@ -6,15 +6,15 @@ from __future__ import print_function
 
 from distutils.core import setup
 
-setup(name='tjjrbot',
+setup(name='t2jrbot',
       version='0.1.0',
       description='Simple but elegant IRC bot.',
       author='Tuomas Räsänen',
       author_email='tuomasjjrasanen@tjjr.fi',
-      url='http://tjjr.fi/sw/tjjrbot/',
+      url='http://tjjr.fi/sw/t2jrbot/',
       license='GPLv3+',
-      py_modules=['tjjrbot'],
-      scripts=["tjjrbot"],
+      py_modules=['t2jrbot'],
+      scripts=["t2jrbot"],
       platforms=['Linux'],
       classifiers=[
           "Development Status :: 3 - Alpha",

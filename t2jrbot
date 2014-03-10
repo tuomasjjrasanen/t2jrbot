@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# tjjrbot - simple but elegant IRC bot
+# t2jrbot - simple but elegant IRC bot
 # Copyright © 2014 Tuomas Räsänen <tuomasjjrasanen@tjjr.fi>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ from __future__ import print_function
 
 import argparse
 
-import tjjrbot
+import t2jrbot
 
 def command_admins(bot, nick, host, channel, command, argstr):
     admins = ["%s!%s" % (nick, host) for nick, host in bot.admins]
@@ -58,8 +58,8 @@ def parse_args():
                         help="address of the server which bot connects to")
     parser.add_argument("channel", metavar="CHANNEL",
                         help="channel which bot joins after a connection is established")
-    parser.add_argument("-n", "--nick", default="tjjrbot",
-                        help="nickname of the bot, default='tjjrbot'")
+    parser.add_argument("-n", "--nick", default="t2jrbot",
+                        help="nickname of the bot, default='t2jrbot'")
     parser.add_argument("-a", "--admin", action="append", dest="admins",
                         type=parse_admin_arg, metavar="ADMIN",
                         help="admin of the bot (e.g. 'nick!user@example.org'), "
@@ -69,7 +69,7 @@ def parse_args():
 def main():
     options = parse_args()
 
-    bot = tjjrbot.Bot(options.server, options.port, options.nick, options.channel)
+    bot = t2jrbot.Bot(options.server, options.port, options.nick, options.channel)
 
     bot.register_command("!admins", command_admins, "list admins", require_admin=False)
     bot.register_command("!help", command_help, "show help", require_admin=False)
