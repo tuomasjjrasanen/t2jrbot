@@ -39,7 +39,7 @@ class Bot(object):
         self.__channel = channel
         self.__logfile = logfile
         self.__admins = set()
-        self.__oldbuf = ""
+        self.__recvbuf = ""
         self.__sock = None
         self.__botcmd_handlers = {}
         self.__botcmd_descriptions = {}
@@ -99,18 +99,18 @@ class Bot(object):
         self.__sock.sendall("%s%s" % (msg, CRLF))
 
     def __recv_ircmsgs(self):
-        newbuf = self.__sock.recv(4096)
-        if not newbuf:
+        recvbuf = self.__sock.recv(4096)
+        if not recvbuf:
             raise Error("receive failed, connection reset by peer")
 
         # Concatenate old and new bufs.
-        buf = self.__oldbuf + newbuf
+        self.__recvbuf += recvbuf
 
         while True:
-            msg, sep, buf = buf.partition(CRLF)
+            msg, sep, self.__recvbuf = self.__recvbuf.partition(CRLF)
             if sep != CRLF:
                 # Save the incomplete msg for later concatenation.
-                self.__oldbuf = msg
+                self.__recvbuf = msg
                 break
             self.__log("<=IRC", msg)
 
