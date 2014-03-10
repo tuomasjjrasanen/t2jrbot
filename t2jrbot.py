@@ -155,6 +155,10 @@ class Bot(object):
                 self.__recv_ircmsg_privmsg(prefix, *params)
 
             elif cmd == "001":
+                # Update the nick after successful connection because
+                # the server might have truncated or otherwise modified
+                # the nick we requested.
+                self.__nick = params[0]
                 self.__send_ircmsg("JOIN %s" % self.__channel)
 
             elif cmd == "JOIN":
