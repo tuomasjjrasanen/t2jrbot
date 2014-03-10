@@ -59,7 +59,7 @@ class Bot(object):
         if require_admin:
             self.__admin_botcmds.add(cmd)
 
-    def start(self):
+    def run(self):
         self.__sock.connect((self.__server, self.__port))
         try:
             # Register connection.
@@ -213,7 +213,7 @@ def main():
     )
     bot.register_command("!help", command_help, "show help", require_admin=False)
     bot.register_command("!say", command_say, "say something to the channel")
-    bot.start()
+    bot.run()
 
 if __name__ == "__main__":
     main()
