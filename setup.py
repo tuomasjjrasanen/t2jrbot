@@ -11,6 +11,7 @@ setup(name='tjjrbot',
       url='http://tjjr.fi/sw/tjjrbot/',
       license='GPLv3+',
       py_modules=['tjjrbot'],
+      scripts=["tjjrbot"],
       platforms=['Linux'],
       classifiers=[
           "Development Status :: 3 - Alpha",
