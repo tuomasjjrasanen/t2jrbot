@@ -43,7 +43,7 @@ class Bot(object):
         self.__oldbuf = ""
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        self.__botcmds = {}
+        self.__botcmd_handlers = {}
         self.__botcmd_descriptions = {}
         self.__admin_botcmds = set()
 
@@ -51,10 +51,10 @@ class Bot(object):
     def command_descriptions(self):
         return dict(self.__botcmd_descriptions)
 
-    def register_command(self, cmd, func, description="", require_admin=True):
-        if cmd in self.__botcmds:
+    def register_command(self, cmd, handler, description="", require_admin=True):
+        if cmd in self.__botcmd_handlers:
             raise Error("command is already registered")
-        self.__botcmds[cmd] = func
+        self.__botcmd_handlers[cmd] = handler
         self.__botcmd_descriptions[cmd] = description
         if require_admin:
             self.__admin_botcmds.add(cmd)
@@ -165,7 +165,7 @@ class Bot(object):
 
         cmd, _, argstr = cmdstr.partition(' ')
         try:
-            botcmd = self.__botcmds[cmd]
+            botcmd_handler = self.__botcmd_handlers[cmd]
         except KeyError:
             # Silently ignore all but commands.
             return
@@ -176,7 +176,7 @@ class Bot(object):
                                        % (nick, cmd))
             return
 
-        botcmd(self, nick, host, self.__channel, cmd, argstr)
+        botcmd_handler(self, nick, host, self.__channel, cmd, argstr)
 
     def __admin_check(self, nick, host, cmd):
         if cmd not in self.__admin_botcmds:
