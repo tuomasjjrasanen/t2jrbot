@@ -25,6 +25,10 @@ import argparse
 
 import tjjrbot
 
+def command_admins(bot, nick, host, channel, command, argstr):
+    admins = ["%s!%s" % (nick, host) for nick, host in bot.admins]
+    bot.send_ircmsg_privmsg(channel, "%s: %s" % (nick, ", ".join(admins)))
+
 def command_help(bot, nick, host, channel, command, argstr):
     bot.send_ircmsg_privmsg(channel, "%s: List of commands:" % nick)
     for cmd, descr in bot.command_descriptions.items():
@@ -67,6 +71,7 @@ def main():
 
     bot = tjjrbot.Bot(options.server, options.port, options.nick, options.channel)
 
+    bot.register_command("!admins", command_admins, "list admins", require_admin=False)
     bot.register_command("!help", command_help, "show help", require_admin=False)
     bot.register_command("!quit", command_quit, "quit")
     bot.register_command("!say", command_say, "say something to the channel")
