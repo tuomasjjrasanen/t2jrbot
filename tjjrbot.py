@@ -74,7 +74,7 @@ class Bot(object):
         self.__log("=>IRC", msg)
         self.__sock.sendall("%s%s" % (msg, CRLF))
 
-    def __send_ircmsg_privmsg(self, target, text):
+    def send_ircmsg_privmsg(self, target, text):
         head = "PRIVMSG %s :" % target
         max_tail_len = MAX_MSG_LEN - len(head)
 
@@ -132,7 +132,7 @@ class Bot(object):
                 self.__send_ircmsg("JOIN %s" % self.__channel)
 
             elif cmd == "JOIN":
-                self.__send_ircmsg_privmsg(self.__channel,
+                self.send_ircmsg_privmsg(self.__channel,
                                            "USAGE: %s: !help" % self.__nick)
 
     def __recv_ircmsg_privmsg(self, prefix, target, text):
@@ -164,7 +164,7 @@ class Bot(object):
             return
 
         if not self.__admin_check(nick, host, cmd):
-            self.__send_ircmsg_privmsg(self.__channel,
+            self.send_ircmsg_privmsg(self.__channel,
                                        "%s: only admin is allowed to %s"
                                        % (nick, cmd))
             return
@@ -172,17 +172,17 @@ class Bot(object):
         botcmd(nick, host, cmd, argstr)
 
     def __botcmd_help(self, nick, host, cmd, argstr):
-        self.__send_ircmsg_privmsg(self.__channel,
+        self.send_ircmsg_privmsg(self.__channel,
                                    "%s: List of commands:" % nick)
         for name in self.__botcmds:
             _, description = self.__botcmds[name]
-            self.__send_ircmsg_privmsg(self.__channel,
+            self.send_ircmsg_privmsg(self.__channel,
                                        "%s: %s - %s"
                                        % (nick, name, description))
 
     def __botcmd_say(self, nick, host, cmd, argstr):
-        self.__send_ircmsg_privmsg(self.__channel, argstr)
-        self.__send_ircmsg_privmsg(self.__channel, "-- %s" % nick)
+        self.send_ircmsg_privmsg(self.__channel, argstr)
+        self.send_ircmsg_privmsg(self.__channel, "-- %s" % nick)
 
     def __admin_check(self, nick, host, cmd):
         if cmd not in self.__admin_botcmds:
