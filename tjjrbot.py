@@ -33,12 +33,11 @@ class Error(Exception):
 
 class Bot(object):
 
-    def __init__(self, server, port, nick, channel, logfile=sys.stdout):
+    def __init__(self, server, port, nick, channel):
         self.__server = server
         self.__port = port
         self.__nick = nick
         self.__channel = channel
-        self.__logfile = logfile
         self.__admins = set()
         self.__recvbuf = ""
         self.__sock = None
@@ -194,7 +193,7 @@ class Bot(object):
 
     def __log(self, name, msg):
         timestamp = datetime.datetime.utcnow().isoformat()
-        print(timestamp, name, msg, file=self.__logfile)
+        print(timestamp, name, msg)
 
     def __del__(self):
         self.__sock.close()
