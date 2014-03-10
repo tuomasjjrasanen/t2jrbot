@@ -32,21 +32,20 @@ class Error(Exception):
 
 class Bot(object):
 
-    def __init__(self, **kwargs):
-        self.__nick = kwargs["nick"]
-        self.__port = kwargs["port"]
-        self.__server = kwargs["server"]
-        self.__channel = kwargs["channel"]
-        self.__logfile=kwargs.get("logfile", sys.stdout)
-
+    def __init__(self, server, port, nick, channel, logfile=sys.stdout):
+        self.__server = server
+        self.__port = port
+        self.__nick = nick
+        self.__channel = channel
+        self.__logfile = logfile
         self.__admins = set()
-
         self.__oldbuf = ""
-        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+        self.__sock = None
         self.__botcmd_handlers = {}
         self.__botcmd_descriptions = {}
         self.__admin_botcmds = set()
+
+        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     @property
     def admins(self):
@@ -209,12 +208,7 @@ def command_say(bot, nick, host, channel, command, argstr):
     bot.send_ircmsg_privmsg(channel, "-- %s" % nick)
 
 def main():
-    bot = Bot(
-        server="irc.elisa.fi",
-        port=6667,
-        nick="tjjrbot",
-        channel="#tjjrtjjr",
-    )
+    bot = Bot("irc.elisa.fi", 6667, "tjjrbot", "#tjjrtjjr")
     bot.register_command("!help", command_help, "show help", require_admin=False)
     bot.register_command("!say", command_say, "say something to the channel")
     bot.run()
