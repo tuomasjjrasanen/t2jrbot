@@ -43,14 +43,21 @@ class Bot(object):
         self.__oldbuf = ""
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        self.__botcmds = {
-            "!help": (self.__botcmd_help, "show help"),
-            "!say": (self.__botcmd_say, "say something to the channel"),
-        }
+        self.__botcmds = {}
+        self.__botcmd_descriptions = {}
+        self.__admin_botcmds = set()
 
-        self.__admin_botcmds = (
-            "!say",
-        )
+    @property
+    def command_descriptions(self):
+        return dict(self.__botcmd_descriptions)
+
+    def register_command(self, cmd, func, description="", require_admin=True):
+        if cmd in self.__botcmds:
+            raise Error("command is already registered")
+        self.__botcmds[cmd] = func
+        self.__botcmd_descriptions[cmd] = description
+        if require_admin:
+            self.__admin_botcmds.add(cmd)
 
     def start(self):
         self.__sock.connect((self.__server, self.__port))
@@ -158,7 +165,7 @@ class Bot(object):
 
         cmd, _, argstr = cmdstr.partition(' ')
         try:
-            botcmd, _ = self.__botcmds[cmd]
+            botcmd = self.__botcmds[cmd]
         except KeyError:
             # Silently ignore all but commands.
             return
@@ -169,20 +176,7 @@ class Bot(object):
                                        % (nick, cmd))
             return
 
-        botcmd(nick, host, cmd, argstr)
-
-    def __botcmd_help(self, nick, host, cmd, argstr):
-        self.send_ircmsg_privmsg(self.__channel,
-                                   "%s: List of commands:" % nick)
-        for name in self.__botcmds:
-            _, description = self.__botcmds[name]
-            self.send_ircmsg_privmsg(self.__channel,
-                                       "%s: %s - %s"
-                                       % (nick, name, description))
-
-    def __botcmd_say(self, nick, host, cmd, argstr):
-        self.send_ircmsg_privmsg(self.__channel, argstr)
-        self.send_ircmsg_privmsg(self.__channel, "-- %s" % nick)
+        botcmd(self, nick, host, self.__channel, cmd, argstr)
 
     def __admin_check(self, nick, host, cmd):
         if cmd not in self.__admin_botcmds:
@@ -201,6 +195,15 @@ class Bot(object):
     def __del__(self):
         self.__sock.close()
 
+def command_help(bot, nick, host, channel, command, argstr):
+    bot.send_ircmsg_privmsg(channel, "%s: List of commands:" % nick)
+    for cmd, descr in bot.command_descriptions.items():
+        bot.send_ircmsg_privmsg(channel, "%s: %s - %s" % (nick, cmd, descr))
+
+def command_say(bot, nick, host, channel, command, argstr):
+    bot.send_ircmsg_privmsg(channel, argstr)
+    bot.send_ircmsg_privmsg(channel, "-- %s" % nick)
+
 def main():
     bot = Bot(
         server="irc.elisa.fi",
@@ -209,6 +212,8 @@ def main():
         channel="#tjjrtjjr",
         logfile=open("tjjrbot.log", "a", 1),
     )
+    bot.register_command("!help", command_help, "show help", require_admin=False)
+    bot.register_command("!say", command_say, "say something to the channel")
     bot.start()
 
 if __name__ == "__main__":
