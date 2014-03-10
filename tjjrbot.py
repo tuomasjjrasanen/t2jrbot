@@ -44,6 +44,8 @@ class Bot(object):
         self.__botcmd_handlers = {}
         self.__botcmd_descriptions = {}
         self.__admin_botcmds = set()
+        self.__quit_reason = ""
+        self.__is_stopping = False
 
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -57,6 +59,11 @@ class Bot(object):
 
     def add_admin(self, nick, host):
         self.__admins.add((nick, host))
+
+    def quit(self, reason=""):
+        # The actual quit is postponed until the main loop has finished.
+        self.__quit_reason = reason
+        self.__is_stopping = True
 
     def register_command(self, cmd, handler, description="", require_admin=True):
         if cmd in self.__botcmd_handlers:
@@ -73,11 +80,16 @@ class Bot(object):
             self.__send_ircmsg("NICK %s" % self.__nick)
             self.__send_ircmsg("USER %s 0 * :%s" % (self.__nick, self.__nick))
 
-            while True:
+            while not self.__is_stopping:
                 rs, _, _ = select.select([self.__sock], [], [])
 
                 # Read socket buffer, parse messages and handle them.
                 self.__recv_ircmsgs()
+
+            quit_msg = "QUIT"
+            if self.__quit_reason:
+                quit_msg += " :%s" % self.__quit_reason
+            self.__send_ircmsg(quit_msg)
 
         finally:
             self.__sock.shutdown(socket.SHUT_RDWR)

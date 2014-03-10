@@ -30,6 +30,9 @@ def command_help(bot, nick, host, channel, command, argstr):
     for cmd, descr in bot.command_descriptions.items():
         bot.send_ircmsg_privmsg(channel, "%s: %s - %s" % (nick, cmd, descr))
 
+def command_quit(bot, nick, host, channel, command, argstr):
+    bot.quit(argstr)
+
 def command_say(bot, nick, host, channel, command, argstr):
     bot.send_ircmsg_privmsg(channel, argstr)
     bot.send_ircmsg_privmsg(channel, "-- %s" % nick)
@@ -50,6 +53,7 @@ def main():
     options = parse_args()
     bot = tjjrbot.Bot(options.server, options.port, options.nick, options.channel)
     bot.register_command("!help", command_help, "show help", require_admin=False)
+    bot.register_command("!quit", command_quit, "quit")
     bot.register_command("!say", command_say, "say something to the channel")
     bot.run()
 
