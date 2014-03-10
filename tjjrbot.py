@@ -19,6 +19,7 @@
 
 from __future__ import print_function
 
+import argparse
 import datetime
 import select
 import socket
@@ -207,8 +208,21 @@ def command_say(bot, nick, host, channel, command, argstr):
     bot.send_ircmsg_privmsg(channel, argstr)
     bot.send_ircmsg_privmsg(channel, "-- %s" % nick)
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Simple but elegant IRC bot")
+    parser.add_argument("-p", "--port", type=int, default=6667,
+                        help="port of the server which bot connects to, default=6667")
+    parser.add_argument("server", metavar="SERVER",
+                        help="address of the server which bot connects to")
+    parser.add_argument("channel", metavar="CHANNEL",
+                        help="channel which bot joins after a connection is established")
+    parser.add_argument("-n", "--nick", default="tjjrbot",
+                        help="nickname of the bot, default='tjjrbot'")
+    return parser.parse_args()
+
 def main():
-    bot = Bot("irc.elisa.fi", 6667, "tjjrbot", "#tjjrtjjr")
+    options = parse_args()
+    bot = Bot(options.server, options.port, options.nick, options.channel)
     bot.register_command("!help", command_help, "show help", require_admin=False)
     bot.register_command("!say", command_say, "say something to the channel")
     bot.run()
