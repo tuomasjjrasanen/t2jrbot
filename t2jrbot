@@ -23,6 +23,9 @@ from __future__ import print_function
 
 import argparse
 import hashlib
+import importlib
+import os
+import sys
 
 import t2jrbot
 
@@ -45,6 +48,31 @@ def command_help(bot, nick, host, channel, command, argstr):
 
 def command_quit(bot, nick, host, channel, command, argstr):
     bot.quit(argstr)
+
+plugins = {}
+plugin_dirs = set()
+
+def load_plugin(bot, plugin_name):
+    global plugins
+    global plugin_dirs
+
+    if plugin_name in plugins:
+        return False
+
+    orig_sys_path = list(sys.path)
+    try:
+        sys.path.extend(plugin_dirs)
+        plugin = importlib.import_module(plugin_name)
+        del sys.modules[plugin_name]
+
+        for name, handler, description, require_admin in plugin.commands:
+            bot.register_command(name, handler, description, require_admin)
+
+        plugins[plugin_name] = plugin
+    finally:
+        sys.path = orig_sys_path
+
+    return True
 
 def command_say(bot, nick, host, channel, command, argstr):
     bot.send_ircmsg_privmsg(channel, argstr)
@@ -73,9 +101,19 @@ def parse_args():
                         type=parse_admin_arg, metavar="ADMIN",
                         help="admin of the bot (e.g. 'nick!user@example.org'), "
                         "can be given multiple times to add multiple admins")
+    parser.add_argument("-L", "--plugin-dir", action="append", dest="plugin_dirs",
+                        default=[], metavar="PLUGIN_DIR",
+                        help="add plugin directory, can be given multiple times "
+                        "to add multiple directories")
+    parser.add_argument("-l", "--load-plugin", action="append", dest="plugin_names",
+                        default=[], metavar="PLUGIN",
+                        help="load plugin, can be given multiple times to "
+                        "load multiple plugins")
     return parser.parse_args()
 
 def main():
+    global plugin_dirs
+
     options = parse_args()
 
     if options.nick is None:
@@ -86,6 +124,7 @@ def main():
 
     bot = t2jrbot.Bot(options.server, options.port, options.nick, options.channel)
 
+    # Built-in commands.
     bot.register_command("!admin_list", command_admin_list, "list admins", require_admin=False)
     bot.register_command("!admin_add", command_admin_add, "add admin")
     bot.register_command("!admin_remove", command_admin_remove, "remove admin")
@@ -95,6 +134,12 @@ def main():
 
     for admin_nick, admin_host in options.admins:
         bot.add_admin(admin_nick, admin_host)
+
+    plugin_dirs.update(options.plugin_dirs)
+
+    if len(plugin_dirs) > 0:
+        for plugin_name in set(options.plugin_names):
+            load_plugin(bot, plugin_name)
 
     bot.run()
 

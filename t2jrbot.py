@@ -76,6 +76,14 @@ class Bot(object):
         if require_admin:
             self.__admin_botcmds.add(cmd)
 
+    def unregister_command(self, cmd):
+        try:
+            del self.__botcmd_handlers[cmd]
+        except KeyError:
+            raise Error("command '%s' is not registered" % cmd)
+        del self.__botcmd_descriptions[cmd]
+        self.__admin_botcmds.discard(cmd)
+
     def run(self):
         self.__sock.connect((self.__server, self.__port))
         try:
