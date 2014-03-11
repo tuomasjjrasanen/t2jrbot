@@ -60,6 +60,9 @@ class Bot(object):
     def add_admin(self, nick, host):
         self.__admins.add((nick, host))
 
+    def remove_admin(self, nick, host):
+        self.__admins.discard((nick, host))
+
     def quit(self, reason=""):
         # The actual quit is postponed until the main loop has finished.
         self.__quit_reason = reason

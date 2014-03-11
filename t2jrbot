@@ -34,6 +34,10 @@ def command_add_admin(bot, nick, host, channel, command, argstr):
     admin_nick, admin_host = parse_admin_arg(argstr)
     bot.add_admin(admin_nick, admin_host)
 
+def command_remove_admin(bot, nick, host, channel, command, argstr):
+    admin_nick, admin_host = parse_admin_arg(argstr)
+    bot.remove_admin(admin_nick, admin_host)
+
 def command_help(bot, nick, host, channel, command, argstr):
     bot.send_ircmsg_privmsg(channel, "%s: List of commands:" % nick)
     for cmd, descr in bot.command_descriptions.items():
@@ -84,6 +88,7 @@ def main():
 
     bot.register_command("!list_admins", command_list_admins, "list admins", require_admin=False)
     bot.register_command("!add_admin", command_add_admin, "add admin")
+    bot.register_command("!remove_admin", command_remove_admin, "remove admin")
     bot.register_command("!help", command_help, "show help", require_admin=False)
     bot.register_command("!quit", command_quit, "quit")
     bot.register_command("!say", command_say, "say something to the channel")
