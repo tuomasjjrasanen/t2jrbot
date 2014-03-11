@@ -26,7 +26,7 @@ import hashlib
 
 import t2jrbot
 
-def command_admins(bot, nick, host, channel, command, argstr):
+def command_list_admins(bot, nick, host, channel, command, argstr):
     admins = ["%s!%s" % (nick, host) for nick, host in bot.admins]
     bot.send_ircmsg_privmsg(channel, "%s: %s" % (nick, ", ".join(admins)))
 
@@ -82,7 +82,7 @@ def main():
 
     bot = t2jrbot.Bot(options.server, options.port, options.nick, options.channel)
 
-    bot.register_command("!admins", command_admins, "list admins", require_admin=False)
+    bot.register_command("!list_admins", command_list_admins, "list admins", require_admin=False)
     bot.register_command("!add_admin", command_add_admin, "add admin")
     bot.register_command("!help", command_help, "show help", require_admin=False)
     bot.register_command("!quit", command_quit, "quit")
