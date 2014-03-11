@@ -28,7 +28,7 @@ import t2jrbot
 
 def command_list_admins(bot, nick, host, channel, command, argstr):
     admins = ["%s!%s" % (nick, host) for nick, host in bot.admins]
-    bot.send_ircmsg_privmsg(channel, "%s: %s" % (nick, ", ".join(admins)))
+    bot.send_ircmsg_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
 
 def command_add_admin(bot, nick, host, channel, command, argstr):
     admin_nick, admin_host = parse_admin_arg(argstr)
