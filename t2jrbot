@@ -61,7 +61,7 @@ def parse_args():
                         help="channel which bot joins after a connection is established")
     parser.add_argument("-n", "--nick", default=None,
                         help="nickname of the bot")
-    parser.add_argument("-a", "--admin", action="append", dest="admins",
+    parser.add_argument("-a", "--admin", action="append", dest="admins", default=[],
                         type=parse_admin_arg, metavar="ADMIN",
                         help="admin of the bot (e.g. 'nick!user@example.org'), "
                         "can be given multiple times to add multiple admins")
