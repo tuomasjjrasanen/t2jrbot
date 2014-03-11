@@ -199,7 +199,11 @@ class Bot(object):
                                      % (nick, cmd))
             return
 
-        botcmd_handler(self, nick, host, self.__channel, cmd, argstr)
+        try:
+            botcmd_handler(self, nick, host, self.__channel, cmd, argstr)
+        except Exception, e:
+            self.send_ircmsg_privmsg(self.__channel,
+                                     "%s: error: %s" % (nick, e.message))
 
     def __admin_check(self, nick, host, cmd):
         if cmd not in self.__admin_botcmds:
