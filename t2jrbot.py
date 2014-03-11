@@ -70,7 +70,7 @@ class Bot(object):
 
     def register_command(self, cmd, handler, description="", require_admin=True):
         if cmd in self.__botcmd_handlers:
-            raise Error("command is already registered")
+            raise Error("command '%s' is already registered" % cmd)
         self.__botcmd_handlers[cmd] = handler
         self.__botcmd_descriptions[cmd] = description
         if require_admin:
