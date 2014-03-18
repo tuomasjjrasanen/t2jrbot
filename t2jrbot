@@ -43,7 +43,7 @@ def command_admin_remove(bot, nick, host, channel, command, argstr):
 
 def command_help(bot, nick, host, channel, command, argstr):
     bot.send_ircmsg_privmsg(channel, "%s: List of commands:" % nick)
-    for cmd, descr in bot.command_descriptions.items():
+    for cmd, descr in sorted(bot.command_descriptions.items()):
         bot.send_ircmsg_privmsg(channel, "%s: %s - %s" % (nick, cmd, descr))
 
 def command_quit(bot, nick, host, channel, command, argstr):
