@@ -42,9 +42,25 @@ def command_admin_remove(bot, nick, host, channel, command, argstr):
     bot.remove_admin(admin_nick, admin_host)
 
 def command_help(bot, nick, host, channel, command, argstr):
-    bot.send_ircmsg_privmsg(channel, "%s: List of commands:" % nick)
-    for cmd, descr in sorted(bot.command_descriptions.items()):
-        bot.send_ircmsg_privmsg(channel, "%s: %s - %s" % (nick, cmd, descr))
+    cmd = argstr.strip()
+    if not cmd:
+        commands = sorted(bot.command_descriptions.keys())
+        bot.send_ircmsg_privmsg(channel,
+                                "%s: Commands: %s"
+                                % (nick, ", ".join(commands)))
+        bot.send_ircmsg_privmsg(channel,
+                                "%s: To get detailed help on a command, "
+                                "use %s COMMAND, e.g. %s %s"
+                                % (nick, command, command, command))
+    else:
+        try:
+            descr = bot.command_descriptions[cmd]
+        except KeyError:
+            bot.send_ircmsg_privmsg(channel,
+                                    "%s: command '%s' not found" % (nick, cmd))
+        else:
+            bot.send_ircmsg_privmsg(channel, "%s: %s - %s"
+                                    % (nick, cmd, descr))
 
 def command_quit(bot, nick, host, channel, command, argstr):
     bot.quit(argstr)
@@ -121,11 +137,23 @@ def main():
     bot = t2jrbot.Bot(options.server, options.port, options.nick, options.channel)
 
     # Built-in commands.
-    bot.register_command("!admin_list", command_admin_list, "list admins", require_admin=False)
-    bot.register_command("!admin_add", command_admin_add, "add admin")
-    bot.register_command("!admin_remove", command_admin_remove, "remove admin")
-    bot.register_command("!help", command_help, "show help", require_admin=False)
-    bot.register_command("!quit", command_quit, "quit")
+    bot.register_command("!admin_list", command_admin_list,
+                         "List bot admins. Usage: !admin_list",
+                         require_admin=False)
+    bot.register_command("!admin_add", command_admin_add,
+                         "Add a bot admin. Usage: !admin_add NICK!USER@HOST, "
+                         "e.g. !admin_add fanatic!fan.atic@example.org")
+    bot.register_command("!admin_remove", command_admin_remove,
+                         "Remove a bot admin. Usage: !admin_remove NICK!USER@HOST, "
+                         "e.g. !admin_remove fanatic!fan.atic@example.org")
+    bot.register_command("!help", command_help,
+                         "Since you got this far, "
+                         "you already know what this command does.",
+                         require_admin=False)
+    bot.register_command("!quit", command_quit, "Quits the bot, "
+                         "optionally with a message. "
+                         "Usage: !quit [MESSAGE], "
+                         "e.g. !quit So Long, and Thanks for All the Fish!")
 
     for admin_nick, admin_host in options.admins:
         bot.add_admin(admin_nick, admin_host)
