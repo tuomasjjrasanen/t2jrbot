@@ -74,10 +74,6 @@ def load_plugin(bot, plugin_name):
 
     return True
 
-def command_say(bot, nick, host, channel, command, argstr):
-    bot.send_ircmsg_privmsg(channel, argstr)
-    bot.send_ircmsg_privmsg(channel, "-- %s" % nick)
-
 def parse_admin_arg(admin):
     admin_nick, sep, admin_host = admin.partition("!")
     admin_nick = admin_nick.strip()
@@ -130,7 +126,6 @@ def main():
     bot.register_command("!admin_remove", command_admin_remove, "remove admin")
     bot.register_command("!help", command_help, "show help", require_admin=False)
     bot.register_command("!quit", command_quit, "quit")
-    bot.register_command("!say", command_say, "say something to the channel")
 
     for admin_nick, admin_host in options.admins:
         bot.add_admin(admin_nick, admin_host)
