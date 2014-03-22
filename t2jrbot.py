@@ -49,6 +49,7 @@ class Bot(object):
         self.__is_stopping = False
         self.__plugins = {}
         self.__plugin_dirs = set()
+        self.__ircmsg_sinks = set()
 
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -70,6 +71,9 @@ class Bot(object):
         # The actual quit is postponed until the main loop has finished.
         self.__quit_reason = reason
         self.__is_stopping = True
+
+    def register_ircmsg_sink(self, sink):
+        self.__ircmsg_sinks.add(sink)
 
     def register_command(self, cmd, handler, description="", require_admin=True):
         if cmd in self.__botcmd_handlers:
@@ -179,6 +183,9 @@ class Bot(object):
                 else:
                     param, _, paramstr = paramstr.partition(" ")
                 params.append(param)
+
+            for ircmsg_sink in self.__ircmsg_sinks:
+                ircmsg_sink(self, prefix, cmd, params)
 
             if cmd == "ERROR":
                 raise Error("received ERROR from the server", params)
