@@ -131,8 +131,7 @@ class Bot(object):
             plugin = importlib.import_module(plugin_name)
             del sys.modules[plugin_name]
 
-            for name, handler, description, require_admin in plugin.commands:
-                self.register_command(name, handler, description, require_admin)
+            plugin.load(self)
 
             self.__plugins[plugin_name] = plugin
         finally:
