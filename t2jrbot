@@ -23,9 +23,7 @@ from __future__ import print_function
 
 import argparse
 import hashlib
-import importlib
 import os
-import sys
 
 import t2jrbot
 
@@ -65,31 +63,6 @@ def command_help(bot, nick, host, channel, command, argstr):
 def command_quit(bot, nick, host, channel, command, argstr):
     bot.quit(argstr)
 
-plugins = {}
-plugin_dirs = set()
-
-def load_plugin(bot, plugin_name):
-    global plugins
-    global plugin_dirs
-
-    if plugin_name in plugins:
-        return False
-
-    orig_sys_path = list(sys.path)
-    try:
-        sys.path.extend(plugin_dirs)
-        plugin = importlib.import_module(plugin_name)
-        del sys.modules[plugin_name]
-
-        for name, handler, description, require_admin in plugin.commands:
-            bot.register_command(name, handler, description, require_admin)
-
-        plugins[plugin_name] = plugin
-    finally:
-        sys.path = orig_sys_path
-
-    return True
-
 def parse_admin_arg(admin):
     admin_nick, sep, admin_host = admin.partition("!")
     admin_nick = admin_nick.strip()
@@ -124,8 +97,6 @@ def parse_args():
     return parser.parse_args()
 
 def main():
-    global plugin_dirs
-
     options = parse_args()
 
     if options.nick is None:
@@ -158,11 +129,11 @@ def main():
     for admin_nick, admin_host in options.admins:
         bot.add_admin(admin_nick, admin_host)
 
-    plugin_dirs.update(options.plugin_dirs)
+    for plugin_dir in options.plugin_dirs:
+        bot.add_plugin_dir(plugin_dir)
 
-    if len(plugin_dirs) > 0:
-        for plugin_name in set(options.plugin_names):
-            load_plugin(bot, plugin_name)
+    for plugin_name in set(options.plugin_names):
+        bot.load_plugin(plugin_name)
 
     bot.run()
 

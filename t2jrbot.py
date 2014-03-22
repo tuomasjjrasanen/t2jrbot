@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 
 import datetime
+import importlib
 import select
 import socket
 import sys
@@ -46,6 +47,8 @@ class Bot(object):
         self.__admin_botcmds = set()
         self.__quit_reason = ""
         self.__is_stopping = False
+        self.__plugins = {}
+        self.__plugin_dirs = set()
 
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -114,6 +117,28 @@ class Bot(object):
             tail = text[i:i+max_tail_len]
             self.__send_ircmsg("%s%s" % (head, tail))
             i += len(tail)
+
+    def add_plugin_dir(self, plugin_dir):
+        self.__plugin_dirs.add(plugin_dir)
+
+    def load_plugin(self, plugin_name):
+        if plugin_name in self.__plugins:
+            return False
+
+        orig_sys_path = list(sys.path)
+        try:
+            sys.path.extend(self.__plugin_dirs)
+            plugin = importlib.import_module(plugin_name)
+            del sys.modules[plugin_name]
+
+            for name, handler, description, require_admin in plugin.commands:
+                self.register_command(name, handler, description, require_admin)
+
+            self.__plugins[plugin_name] = plugin
+        finally:
+            sys.path = orig_sys_path
+
+        return True
 
     def __send_ircmsg(self, msg):
         if len(msg) > MAX_MSG_LEN:
