@@ -58,7 +58,7 @@ class Bot(object):
         return set(self.__admins)
 
     @property
-    def command_descriptions(self):
+    def botcmd_descriptions(self):
         return dict(self.__botcmd_descriptions)
 
     def add_admin(self, nick, host):
@@ -86,7 +86,7 @@ class Bot(object):
         cb_set = self.__recv_ircmsg_cbs.setdefault((prefix, command), set())
         cb_set.add(cb)
 
-    def register_command(self, cmd, handler, description="", require_admin=True):
+    def register_botcmd(self, cmd, handler, description="", require_admin=True):
         if cmd in self.__botcmd_handlers:
             raise Error("command '%s' is already registered" % cmd)
         self.__botcmd_handlers[cmd] = handler
@@ -94,7 +94,7 @@ class Bot(object):
         if require_admin:
             self.__admin_botcmds.add(cmd)
 
-    def unregister_command(self, cmd):
+    def unregister_botcmd(self, cmd):
         try:
             del self.__botcmd_handlers[cmd]
         except KeyError:
