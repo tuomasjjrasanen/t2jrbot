@@ -49,7 +49,9 @@ class Bot(object):
         self.__is_stopping = False
         self.__plugins = {}
         self.__plugin_dirs = set()
-        self.__recv_ircmsg_cbs = {}
+
+        self.__recv_ircmsg_cbs_index_map = {}
+        self.__recv_ircmsg_cbs = []
 
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -72,19 +74,22 @@ class Bot(object):
         self.__quit_reason = reason
         self.__is_stopping = True
 
-    def register_recv_ircmsg_cb(self, cb, prefix=None, irccmd=None):
-        """Add a callable to the list of IRC RX callbacks
+    def add_ircmsg_rx_cb(self, cb, prefix=None, irccmd=None):
+        """Add a callable to the list of IRC RX callbacks.
 
         The callback `cb` will be called whenever an IRC message
         matching given `prefix` and `irccmd` has been received. If
-        `prefix` and/or `irccmd` is None, they treated as wildcard
-        filters matching any value.
+        `prefix` and/or `irccmd` is None, they are treated as wildcards
+        matching any value.
 
-        Callbacks are called in no particular order.
+        Callbacks are called in the order they added to the list.
 
         """
-        cb_set = self.__recv_ircmsg_cbs.setdefault((prefix, irccmd), set())
-        cb_set.add(cb)
+        i = len(self.__recv_ircmsg_cbs)
+        self.__recv_ircmsg_cbs.append(cb)
+        key = (prefix, irccmd)
+        indices = self.__recv_ircmsg_cbs_index_map.setdefault(key, [])
+        indices.append(i)
 
     def register_botcmd(self, botcmd, handler, description="", require_admin=True):
         if botcmd in self.__botcmd_handlers:
@@ -211,16 +216,15 @@ class Bot(object):
                 self.__nick = params[0]
                 self.__send_ircmsg("JOIN %s" % self.__channel)
 
-            for cb in self.__recv_ircmsg_cbs.get((None, None), set()):
-                cb(self, prefix, irccmd, params)
+            cb_indices = set()
 
-            for cb in self.__recv_ircmsg_cbs.get((prefix, None), set()):
-                cb(self, prefix, irccmd, params)
+            cb_indices.update(self.__recv_ircmsg_cbs_index_map.get((None, None), set()),
+                              self.__recv_ircmsg_cbs_index_map.get((prefix, None), set()),
+                              self.__recv_ircmsg_cbs_index_map.get((None, irccmd), set()),
+                              self.__recv_ircmsg_cbs_index_map.get((prefix, irccmd), set()))
 
-            for cb in self.__recv_ircmsg_cbs.get((None, irccmd), set()):
-                cb(self, prefix, irccmd, params)
-
-            for cb in self.__recv_ircmsg_cbs.get((prefix, irccmd), set()):
+            for cb_index in sorted(cb_indices):
+                cb = self.__recv_ircmsg_cbs[cb_index]
                 cb(self, prefix, irccmd, params)
 
     def __recv_ircmsg_privmsg(self, prefix, target, text):
