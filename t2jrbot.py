@@ -49,7 +49,7 @@ class Bot(object):
         self.__is_stopping = False
         self.__plugins = {}
         self.__plugin_dirs = set()
-        self.__ircmsg_sinks = set()
+        self.__recv_ircmsg_cbs = {}
 
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -72,8 +72,19 @@ class Bot(object):
         self.__quit_reason = reason
         self.__is_stopping = True
 
-    def register_ircmsg_sink(self, sink):
-        self.__ircmsg_sinks.add(sink)
+    def register_recv_ircmsg_cb(self, cb, prefix=None, command=None):
+        """Add a callable to the list of IRC RX callbacks
+
+        The callback `cb` will be called whenever an IRC message
+        matching given `prefix` and `command` has been received. If
+        `prefix` and/or `command` is None, they treated as wildcard
+        filters matching any value.
+
+        Callbacks are called in no particular order.
+
+        """
+        cb_set = self.__recv_ircmsg_cbs.setdefault((prefix, command), set())
+        cb_set.add(cb)
 
     def register_command(self, cmd, handler, description="", require_admin=True):
         if cmd in self.__botcmd_handlers:
@@ -184,9 +195,6 @@ class Bot(object):
                     param, _, paramstr = paramstr.partition(" ")
                 params.append(param)
 
-            for ircmsg_sink in self.__ircmsg_sinks:
-                ircmsg_sink(self, prefix, cmd, params)
-
             if cmd == "ERROR":
                 raise Error("received ERROR from the server", params)
 
@@ -202,6 +210,18 @@ class Bot(object):
                 # the nick we requested.
                 self.__nick = params[0]
                 self.__send_ircmsg("JOIN %s" % self.__channel)
+
+            for cb in self.__recv_ircmsg_cbs[(None, None)]:
+                cb(self, prefix, cmd, params)
+
+            for cb in self.__recv_ircmsg_cbs[(prefix, None)]:
+                cb(self, prefix, cmd, params)
+
+            for cb in self.__recv_ircmsg_cbs[(None, cmd)]:
+                cb(self, prefix, cmd, params)
+
+            for cb in self.__recv_ircmsg_cbs[(prefix, cmd)]:
+                cb(self, prefix, cmd, params)
 
     def __recv_ircmsg_privmsg(self, prefix, target, text):
         nick, sep, host = prefix.partition("!")
