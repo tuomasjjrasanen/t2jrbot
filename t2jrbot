@@ -26,40 +26,40 @@ import hashlib
 
 import t2jrbot
 
-def botcmd_admin_list(bot, nick, host, channel, command, argstr):
+def botcmd_admin_list(bot, nick, host, channel, this_botcmd, argstr):
     admins = ["%s!%s" % (nick, host) for nick, host in bot.admins]
     bot.send_ircmsg_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
 
-def botcmd_admin_add(bot, nick, host, channel, command, argstr):
+def botcmd_admin_add(bot, nick, host, channel, this_botcmd, argstr):
     admin_nick, admin_host = parse_admin_arg(argstr)
     bot.add_admin(admin_nick, admin_host)
 
-def botcmd_admin_remove(bot, nick, host, channel, command, argstr):
+def botcmd_admin_remove(bot, nick, host, channel, this_botcmd, argstr):
     admin_nick, admin_host = parse_admin_arg(argstr)
     bot.remove_admin(admin_nick, admin_host)
 
-def botcmd_help(bot, nick, host, channel, command, argstr):
-    cmd = argstr.strip()
-    if not cmd:
-        commands = sorted(bot.botcmd_descriptions.keys())
+def botcmd_help(bot, nick, host, channel, this_botcmd, argstr):
+    botcmd = argstr.strip()
+    if not botcmd:
+        botcmds = sorted(bot.botcmd_descriptions.keys())
         bot.send_ircmsg_privmsg(channel,
                                 "%s: Commands: %s"
-                                % (nick, ", ".join(commands)))
+                                % (nick, ", ".join(botcmds)))
         bot.send_ircmsg_privmsg(channel,
                                 "%s: To get detailed help on a command, "
                                 "use %s COMMAND, e.g. %s %s"
-                                % (nick, command, command, command))
+                                % (nick, this_botcmd, this_botcmd, this_botcmd))
     else:
         try:
-            descr = bot.botcmd_descriptions[cmd]
+            descr = bot.botcmd_descriptions[botcmd]
         except KeyError:
             bot.send_ircmsg_privmsg(channel,
-                                    "%s: command '%s' not found" % (nick, cmd))
+                                    "%s: command '%s' not found" % (nick, botcmd))
         else:
             bot.send_ircmsg_privmsg(channel, "%s: %s - %s"
-                                    % (nick, cmd, descr))
+                                    % (nick, botcmd, descr))
 
-def botcmd_quit(bot, nick, host, channel, command, argstr):
+def botcmd_quit(bot, nick, host, channel, this_botcmd, argstr):
     bot.quit(argstr)
 
 def parse_admin_arg(admin):
@@ -106,7 +106,7 @@ def main():
 
     bot = t2jrbot.Bot(options.server, options.port, options.nick, options.channel)
 
-    # Built-in commands.
+    # Built-in bot commands.
     bot.register_botcmd("!admin_list", botcmd_admin_list,
                         "List bot admins. Usage: !admin_list",
                         require_admin=False)

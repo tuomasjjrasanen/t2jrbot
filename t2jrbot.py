@@ -72,35 +72,35 @@ class Bot(object):
         self.__quit_reason = reason
         self.__is_stopping = True
 
-    def register_recv_ircmsg_cb(self, cb, prefix=None, command=None):
+    def register_recv_ircmsg_cb(self, cb, prefix=None, irccmd=None):
         """Add a callable to the list of IRC RX callbacks
 
         The callback `cb` will be called whenever an IRC message
-        matching given `prefix` and `command` has been received. If
-        `prefix` and/or `command` is None, they treated as wildcard
+        matching given `prefix` and `irccmd` has been received. If
+        `prefix` and/or `irccmd` is None, they treated as wildcard
         filters matching any value.
 
         Callbacks are called in no particular order.
 
         """
-        cb_set = self.__recv_ircmsg_cbs.setdefault((prefix, command), set())
+        cb_set = self.__recv_ircmsg_cbs.setdefault((prefix, irccmd), set())
         cb_set.add(cb)
 
-    def register_botcmd(self, cmd, handler, description="", require_admin=True):
-        if cmd in self.__botcmd_handlers:
-            raise Error("command '%s' is already registered" % cmd)
-        self.__botcmd_handlers[cmd] = handler
-        self.__botcmd_descriptions[cmd] = description
+    def register_botcmd(self, botcmd, handler, description="", require_admin=True):
+        if botcmd in self.__botcmd_handlers:
+            raise Error("command '%s' is already registered" % botcmd)
+        self.__botcmd_handlers[botcmd] = handler
+        self.__botcmd_descriptions[botcmd] = description
         if require_admin:
-            self.__admin_botcmds.add(cmd)
+            self.__admin_botcmds.add(botcmd)
 
-    def unregister_botcmd(self, cmd):
+    def unregister_botcmd(self, botcmd):
         try:
-            del self.__botcmd_handlers[cmd]
+            del self.__botcmd_handlers[botcmd]
         except KeyError:
-            raise Error("command '%s' is not registered" % cmd)
-        del self.__botcmd_descriptions[cmd]
-        self.__admin_botcmds.discard(cmd)
+            raise Error("command '%s' is not registered" % botcmd)
+        del self.__botcmd_descriptions[botcmd]
+        self.__admin_botcmds.discard(botcmd)
 
     def run(self):
         self.__sock.connect((self.__server, self.__port))
@@ -184,7 +184,7 @@ class Bot(object):
                 if sep != " ":
                     raise Error("received message has malformed prefix", sep)
 
-            cmd, _, paramstr = msg.partition(" ")
+            irccmd, _, paramstr = msg.partition(" ")
 
             params = []
             while paramstr:
@@ -195,16 +195,16 @@ class Bot(object):
                     param, _, paramstr = paramstr.partition(" ")
                 params.append(param)
 
-            if cmd == "ERROR":
+            if irccmd == "ERROR":
                 raise Error("received ERROR from the server", params)
 
-            elif cmd == "PING":
+            elif irccmd == "PING":
                 self.__send_ircmsg("PONG %s" % self.__nick)
 
-            elif cmd == "PRIVMSG":
+            elif irccmd == "PRIVMSG":
                 self.__recv_ircmsg_privmsg(prefix, *params)
 
-            elif cmd == "001":
+            elif irccmd == "001":
                 # Update the nick after successful connection because
                 # the server might have truncated or otherwise modified
                 # the nick we requested.
@@ -212,16 +212,16 @@ class Bot(object):
                 self.__send_ircmsg("JOIN %s" % self.__channel)
 
             for cb in self.__recv_ircmsg_cbs.get((None, None), set()):
-                cb(self, prefix, cmd, params)
+                cb(self, prefix, irccmd, params)
 
             for cb in self.__recv_ircmsg_cbs.get((prefix, None), set()):
-                cb(self, prefix, cmd, params)
+                cb(self, prefix, irccmd, params)
 
-            for cb in self.__recv_ircmsg_cbs.get((None, cmd), set()):
-                cb(self, prefix, cmd, params)
+            for cb in self.__recv_ircmsg_cbs.get((None, irccmd), set()):
+                cb(self, prefix, irccmd, params)
 
-            for cb in self.__recv_ircmsg_cbs.get((prefix, cmd), set()):
-                cb(self, prefix, cmd, params)
+            for cb in self.__recv_ircmsg_cbs.get((prefix, irccmd), set()):
+                cb(self, prefix, irccmd, params)
 
     def __recv_ircmsg_privmsg(self, prefix, target, text):
         nick, sep, host = prefix.partition("!")
@@ -242,29 +242,29 @@ class Bot(object):
             return
 
         # Strip my nick from the beginning of the text.
-        cmdstr = text[len("%s:" % self.__nick):].lstrip()
+        botcmdstr = text[len("%s:" % self.__nick):].lstrip()
 
-        cmd, _, argstr = cmdstr.partition(' ')
+        botcmd, _, argstr = botcmdstr.partition(' ')
         try:
-            botcmd_handler = self.__botcmd_handlers[cmd]
+            botcmd_handler = self.__botcmd_handlers[botcmd]
         except KeyError:
             # Silently ignore all but commands.
             return
 
-        if not self.__admin_check(nick, host, cmd):
+        if not self.__admin_check(nick, host, botcmd):
             self.send_ircmsg_privmsg(self.__channel,
                                      "%s: only admins are allowed to %s"
-                                     % (nick, cmd))
+                                     % (nick, botcmd))
             return
 
         try:
-            botcmd_handler(self, nick, host, self.__channel, cmd, argstr)
+            botcmd_handler(self, nick, host, self.__channel, botcmd, argstr)
         except Exception, e:
             self.send_ircmsg_privmsg(self.__channel,
                                      "%s: error: %s" % (nick, e.message))
 
-    def __admin_check(self, nick, host, cmd):
-        if cmd not in self.__admin_botcmds:
+    def __admin_check(self, nick, host, botcmd):
+        if botcmd not in self.__admin_botcmds:
             return True
 
         return (nick, host) in self.__admins
