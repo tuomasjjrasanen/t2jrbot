@@ -211,16 +211,16 @@ class Bot(object):
                 self.__nick = params[0]
                 self.__send_ircmsg("JOIN %s" % self.__channel)
 
-            for cb in self.__recv_ircmsg_cbs[(None, None)]:
+            for cb in self.__recv_ircmsg_cbs.get((None, None), set()):
                 cb(self, prefix, cmd, params)
 
-            for cb in self.__recv_ircmsg_cbs[(prefix, None)]:
+            for cb in self.__recv_ircmsg_cbs.get((prefix, None), set()):
                 cb(self, prefix, cmd, params)
 
-            for cb in self.__recv_ircmsg_cbs[(None, cmd)]:
+            for cb in self.__recv_ircmsg_cbs.get((None, cmd), set()):
                 cb(self, prefix, cmd, params)
 
-            for cb in self.__recv_ircmsg_cbs[(prefix, cmd)]:
+            for cb in self.__recv_ircmsg_cbs.get((prefix, cmd), set()):
                 cb(self, prefix, cmd, params)
 
     def __recv_ircmsg_privmsg(self, prefix, target, text):
