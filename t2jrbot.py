@@ -116,8 +116,8 @@ class Bot(object):
         self.__sock.connect((self.__server, self.__port))
         try:
             # Register connection.
-            self.__send_ircmsg("NICK %s" % self.__nick)
-            self.__send_ircmsg("USER %s 0 * :%s" % (self.__nick, self.__nick))
+            self.send_ircmsg("NICK %s" % self.__nick)
+            self.send_ircmsg("USER %s 0 * :%s" % (self.__nick, self.__nick))
 
             while not self.__is_stopping:
                 rs, _, _ = select.select([self.__sock], [], [])
@@ -128,7 +128,7 @@ class Bot(object):
             quit_msg = "QUIT"
             if self.__quit_reason:
                 quit_msg += " :%s" % self.__quit_reason
-            self.__send_ircmsg(quit_msg)
+            self.send_ircmsg(quit_msg)
 
         finally:
             self.__sock.shutdown(socket.SHUT_RDWR)
@@ -140,7 +140,7 @@ class Bot(object):
         i = 0
         while i < len(text):
             tail = text[i:i+max_tail_len]
-            self.__send_ircmsg("%s%s" % (head, tail))
+            self.send_ircmsg("%s%s" % (head, tail))
             i += len(tail)
 
     def add_plugin_dir(self, plugin_dir):
@@ -164,7 +164,7 @@ class Bot(object):
 
         return True
 
-    def __send_ircmsg(self, msg):
+    def send_ircmsg(self, msg):
         if len(msg) > MAX_MSG_LEN:
             raise Error("message is too long to send", len(msg))
         self.__log("=>IRC", msg)
@@ -260,14 +260,14 @@ class Bot(object):
         raise Error("received ERROR from the server", params)
 
     def __recv_ircmsg_ping(self, prefix, this_irccmd, params):
-        self.__send_ircmsg("PONG %s" % self.__nick)
+        self.send_ircmsg("PONG %s" % self.__nick)
 
     def __recv_ircmsg_001(self, prefix, this_irccmd, params):
         # Update the nick after successful connection because
         # the server might have truncated or otherwise modified
         # the nick we requested.
         self.__nick = params[0]
-        self.__send_ircmsg("JOIN %s" % self.__channel)
+        self.send_ircmsg("JOIN %s" % self.__channel)
 
     def __admin_check(self, nick, host, botcmd):
         if botcmd not in self.__admin_botcmds:
