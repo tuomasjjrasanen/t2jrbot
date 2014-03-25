@@ -55,7 +55,6 @@ class Bot(object):
 
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        self.add_ircmsg_rx_cb(self.__recv_ircmsg_error, irccmd="ERROR")
         self.add_ircmsg_rx_cb(self.__recv_ircmsg_privmsg, irccmd="PRIVMSG")
         self.add_ircmsg_rx_cb(self.__recv_ircmsg_001, irccmd="001")
 
@@ -263,9 +262,6 @@ class Bot(object):
         except Exception, e:
             self.send_ircmsg_privmsg(channel,
                                      "%s: error: %s" % (nick, e.message))
-
-    def __recv_ircmsg_error(self, prefix, this_irccmd, params):
-        raise Error("received ERROR from the server", params)
 
     def __recv_ircmsg_001(self, prefix, this_irccmd, params):
         # Update the nick after successful connection because
