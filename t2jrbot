@@ -62,6 +62,9 @@ def botcmd_help(bot, nick, host, channel, this_botcmd, argstr):
 def botcmd_quit(bot, nick, host, channel, this_botcmd, argstr):
     bot.quit(argstr)
 
+def recv_ircmsg_ping(bot, prefix, this_irccmd, params):
+    bot.send_ircmsg_pong()
+
 def parse_admin_arg(admin):
     admin_nick, sep, admin_host = admin.partition("!")
     admin_nick = admin_nick.strip()
@@ -124,6 +127,8 @@ def main():
                         "optionally with a message. "
                         "Usage: !quit [MESSAGE], "
                         "e.g. !quit So Long, and Thanks for All the Fish!")
+
+    bot.add_ircmsg_rx_cb(recv_ircmsg_ping, irccmd="PING")
 
     for admin_nick, admin_host in options.admins:
         bot.add_admin(admin_nick, admin_host)

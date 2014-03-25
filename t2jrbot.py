@@ -56,7 +56,6 @@ class Bot(object):
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self.add_ircmsg_rx_cb(self.__recv_ircmsg_error, irccmd="ERROR")
-        self.add_ircmsg_rx_cb(self.__recv_ircmsg_ping, irccmd="PING")
         self.add_ircmsg_rx_cb(self.__recv_ircmsg_privmsg, irccmd="PRIVMSG")
         self.add_ircmsg_rx_cb(self.__recv_ircmsg_001, irccmd="001")
 
@@ -174,6 +173,9 @@ class Bot(object):
         self.__log("=>IRC", msg)
         self.__sock.sendall("%s%s" % (msg, CRLF))
 
+    def send_ircmsg_pong(self):
+        self.send_ircmsg("PONG %s" % self.__nick)
+
     def __recv_ircmsgs(self):
         recvbuf = self.__sock.recv(4096)
         if not recvbuf:
@@ -264,9 +266,6 @@ class Bot(object):
 
     def __recv_ircmsg_error(self, prefix, this_irccmd, params):
         raise Error("received ERROR from the server", params)
-
-    def __recv_ircmsg_ping(self, prefix, this_irccmd, params):
-        self.send_ircmsg("PONG %s" % self.__nick)
 
     def __recv_ircmsg_001(self, prefix, this_irccmd, params):
         # Update the nick after successful connection because
