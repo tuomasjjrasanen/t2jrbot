@@ -61,6 +61,10 @@ class Bot(object):
         self.add_ircmsg_rx_cb(self.__recv_ircmsg_001, irccmd="001")
 
     @property
+    def nick(self):
+        return self.__nick
+
+    @property
     def admins(self):
         return set(self.__admins)
 
