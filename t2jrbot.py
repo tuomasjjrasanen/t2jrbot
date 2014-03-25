@@ -227,9 +227,6 @@ class Bot(object):
             # ignored.
             return
 
-        self.__recv_ircmsg_privmsg_chan(nick, host, text)
-
-    def __recv_ircmsg_privmsg_chan(self, nick, host, text):
         # Ignore all leading whitespaces.
         text = text.lstrip()
 
