@@ -55,6 +55,11 @@ class Bot(object):
 
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+        self.add_ircmsg_rx_cb(self.__recv_ircmsg_error, irccmd="ERROR")
+        self.add_ircmsg_rx_cb(self.__recv_ircmsg_ping, irccmd="PING")
+        self.add_ircmsg_rx_cb(self.__recv_ircmsg_privmsg, irccmd="PRIVMSG")
+        self.add_ircmsg_rx_cb(self.__recv_ircmsg_001, irccmd="001")
+
     @property
     def admins(self):
         return set(self.__admins)
@@ -200,22 +205,6 @@ class Bot(object):
                     param, _, paramstr = paramstr.partition(" ")
                 params.append(param)
 
-            if irccmd == "ERROR":
-                raise Error("received ERROR from the server", params)
-
-            elif irccmd == "PING":
-                self.__send_ircmsg("PONG %s" % self.__nick)
-
-            elif irccmd == "PRIVMSG":
-                self.__recv_ircmsg_privmsg(prefix, *params)
-
-            elif irccmd == "001":
-                # Update the nick after successful connection because
-                # the server might have truncated or otherwise modified
-                # the nick we requested.
-                self.__nick = params[0]
-                self.__send_ircmsg("JOIN %s" % self.__channel)
-
             cb_indices = set()
 
             cb_indices.update(self.__recv_ircmsg_cbs_index_map.get((None, None), set()),
@@ -266,6 +255,19 @@ class Bot(object):
         except Exception, e:
             self.send_ircmsg_privmsg(self.__channel,
                                      "%s: error: %s" % (nick, e.message))
+
+    def __recv_ircmsg_error(self, prefix, this_irccmd, params):
+        raise Error("received ERROR from the server", params)
+
+    def __recv_ircmsg_ping(self, prefix, this_irccmd, params):
+        self.__send_ircmsg("PONG %s" % self.__nick)
+
+    def __recv_ircmsg_001(self, prefix, this_irccmd, params):
+        # Update the nick after successful connection because
+        # the server might have truncated or otherwise modified
+        # the nick we requested.
+        self.__nick = params[0]
+        self.__send_ircmsg("JOIN %s" % self.__channel)
 
     def __admin_check(self, nick, host, botcmd):
         if botcmd not in self.__admin_botcmds:
