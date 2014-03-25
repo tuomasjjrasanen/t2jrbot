@@ -227,6 +227,8 @@ class Bot(object):
             # ignored.
             return
 
+        channel = target
+
         # Ignore all leading whitespaces.
         text = text.lstrip()
 
@@ -245,15 +247,15 @@ class Bot(object):
             return
 
         if not self.__admin_check(nick, host, botcmd):
-            self.send_ircmsg_privmsg(self.__channel,
+            self.send_ircmsg_privmsg(channel,
                                      "%s: only admins are allowed to %s"
                                      % (nick, botcmd))
             return
 
         try:
-            botcmd_handler(self, nick, host, self.__channel, botcmd, argstr)
+            botcmd_handler(self, nick, host, channel, botcmd, argstr)
         except Exception, e:
-            self.send_ircmsg_privmsg(self.__channel,
+            self.send_ircmsg_privmsg(channel,
                                      "%s: error: %s" % (nick, e.message))
 
     def __recv_ircmsg_error(self, prefix, this_irccmd, params):
