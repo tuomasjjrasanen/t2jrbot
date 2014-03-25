@@ -186,35 +186,38 @@ class Bot(object):
                 break
             self.__log("<=IRC", msg)
 
-            prefix = ""
+            self.__recv_ircmsg(msg)
 
-            if msg.startswith(":"):
-                prefix, sep, msg = msg.partition(" ")
-                prefix = prefix[1:]
-                if sep != " ":
-                    raise Error("received message has malformed prefix", sep)
+    def __recv_ircmsg(self, msg):
+        prefix = ""
 
-            irccmd, _, paramstr = msg.partition(" ")
+        if msg.startswith(":"):
+            prefix, sep, msg = msg.partition(" ")
+            prefix = prefix[1:]
+            if sep != " ":
+                raise Error("received message has malformed prefix", sep)
 
-            params = []
-            while paramstr:
-                if paramstr.startswith(":"):
-                    param = paramstr[1:]
-                    paramstr = ""
-                else:
-                    param, _, paramstr = paramstr.partition(" ")
-                params.append(param)
+        irccmd, _, paramstr = msg.partition(" ")
 
-            cb_indices = set()
+        params = []
+        while paramstr:
+            if paramstr.startswith(":"):
+                param = paramstr[1:]
+                paramstr = ""
+            else:
+                param, _, paramstr = paramstr.partition(" ")
+            params.append(param)
 
-            cb_indices.update(self.__recv_ircmsg_cbs_index_map.get((None, None), set()),
-                              self.__recv_ircmsg_cbs_index_map.get((prefix, None), set()),
-                              self.__recv_ircmsg_cbs_index_map.get((None, irccmd), set()),
-                              self.__recv_ircmsg_cbs_index_map.get((prefix, irccmd), set()))
+        cb_indices = set()
 
-            for cb_index in sorted(cb_indices):
-                cb = self.__recv_ircmsg_cbs[cb_index]
-                cb(self, prefix, irccmd, params)
+        cb_indices.update(self.__recv_ircmsg_cbs_index_map.get((None, None), set()),
+                          self.__recv_ircmsg_cbs_index_map.get((prefix, None), set()),
+                          self.__recv_ircmsg_cbs_index_map.get((None, irccmd), set()),
+                          self.__recv_ircmsg_cbs_index_map.get((prefix, irccmd), set()))
+
+        for cb_index in sorted(cb_indices):
+            cb = self.__recv_ircmsg_cbs[cb_index]
+            cb(self, prefix, irccmd, params)
 
     def __recv_ircmsg_privmsg(self, prefix, target, text):
         nick, sep, host = prefix.partition("!")
