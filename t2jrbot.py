@@ -246,7 +246,7 @@ class Bot(object):
             # Silently ignore all but commands.
             return
 
-        if not self.__admin_check(nick, host, botcmd):
+        if not self.admin_check(nick, host, botcmd):
             self.send_ircmsg_privmsg(channel,
                                      "%s: only admins are allowed to %s"
                                      % (nick, botcmd))
@@ -271,7 +271,7 @@ class Bot(object):
         self.__nick = params[0]
         self.send_ircmsg("JOIN %s" % self.__channel)
 
-    def __admin_check(self, nick, host, botcmd):
+    def admin_check(self, nick, host, botcmd):
         if botcmd not in self.__admin_botcmds:
             return True
 
