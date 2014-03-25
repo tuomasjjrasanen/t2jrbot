@@ -34,11 +34,10 @@ class Error(Exception):
 
 class Bot(object):
 
-    def __init__(self, server, port, nick, channel):
+    def __init__(self, server, port, nick):
         self.__server = server
         self.__port = port
-        self.__nick = nick
-        self.__channel = channel
+        self.nick = nick
         self.__admins = set()
         self.__recvbuf = ""
         self.__sock = None
@@ -56,11 +55,6 @@ class Bot(object):
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self.add_ircmsg_rx_cb(self.__recv_ircmsg_privmsg, irccmd="PRIVMSG")
-        self.add_ircmsg_rx_cb(self.__recv_ircmsg_001, irccmd="001")
-
-    @property
-    def nick(self):
-        return self.__nick
 
     @property
     def admins(self):
@@ -118,8 +112,8 @@ class Bot(object):
         self.__sock.connect((self.__server, self.__port))
         try:
             # Register connection.
-            self.send_ircmsg("NICK %s" % self.__nick)
-            self.send_ircmsg("USER %s 0 * :%s" % (self.__nick, self.__nick))
+            self.send_ircmsg("NICK %s" % self.nick)
+            self.send_ircmsg("USER %s 0 * :%s" % (self.nick, self.nick))
 
             while not self.__is_stopping:
                 rs, _, _ = select.select([self.__sock], [], [])
@@ -173,7 +167,10 @@ class Bot(object):
         self.__sock.sendall("%s%s" % (msg, CRLF))
 
     def send_ircmsg_pong(self):
-        self.send_ircmsg("PONG %s" % self.__nick)
+        self.send_ircmsg("PONG %s" % self.nick)
+
+    def send_ircmsg_join(self, channel):
+        self.send_ircmsg("JOIN %s" % channel)
 
     def __recv_ircmsgs(self):
         recvbuf = self.__sock.recv(4096)
@@ -227,7 +224,7 @@ class Bot(object):
     def __recv_ircmsg_privmsg(self, prefix, target, text):
         nick, sep, host = prefix.partition("!")
 
-        if target == self.__nick:
+        if target == self.nick:
             # User-private messages are not supported and are silently
             # ignored.
             return
@@ -237,12 +234,12 @@ class Bot(object):
         # Ignore all leading whitespaces.
         text = text.lstrip()
 
-        if not text.startswith("%s:" % self.__nick):
+        if not text.startswith("%s:" % self.nick):
             # The message is not designated to me, ignore.
             return
 
         # Strip my nick from the beginning of the text.
-        botcmdstr = text[len("%s:" % self.__nick):].lstrip()
+        botcmdstr = text[len("%s:" % self.nick):].lstrip()
 
         botcmd, _, argstr = botcmdstr.partition(' ')
         try:
@@ -262,13 +259,6 @@ class Bot(object):
         except Exception, e:
             self.send_ircmsg_privmsg(channel,
                                      "%s: error: %s" % (nick, e.message))
-
-    def __recv_ircmsg_001(self, prefix, this_irccmd, params):
-        # Update the nick after successful connection because
-        # the server might have truncated or otherwise modified
-        # the nick we requested.
-        self.__nick = params[0]
-        self.send_ircmsg("JOIN %s" % self.__channel)
 
     def admin_check(self, nick, host, botcmd):
         if botcmd not in self.__admin_botcmds:

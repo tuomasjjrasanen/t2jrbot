@@ -68,6 +68,13 @@ def recv_ircmsg_ping(bot, prefix, this_irccmd, params):
 def recv_ircmsg_error(bot, prefix, this_irccmd, params):
     sys.exit(1)
 
+def recv_ircmsg_001(bot, prefix, this_irccmd, params):
+    # Update the nick after successful connection because
+    # the server might have truncated or otherwise modified
+    # the nick we requested.
+    bot.nick = params[0]
+    bot.send_ircmsg_join("JOIN %s" % channel)
+
 def parse_admin_arg(admin):
     admin_nick, sep, admin_host = admin.partition("!")
     admin_nick = admin_nick.strip()
@@ -110,7 +117,7 @@ def main():
         md5.update(options.channel)
         options.nick = "t2jrbot_%s" % md5.hexdigest()
 
-    bot = t2jrbot.Bot(options.server, options.port, options.nick, options.channel)
+    bot = t2jrbot.Bot(options.server, options.port, options.nick)
 
     # Built-in bot commands.
     bot.register_botcmd("!admin_list", botcmd_admin_list,
@@ -133,6 +140,7 @@ def main():
 
     bot.add_ircmsg_rx_cb(recv_ircmsg_ping, irccmd="PING")
     bot.add_ircmsg_rx_cb(recv_ircmsg_error, irccmd="ERROR")
+    bot.add_ircmsg_rx_cb(recv_ircmsg_001, irccmd="001")
 
     for admin_nick, admin_host in options.admins:
         bot.add_admin(admin_nick, admin_host)
