@@ -110,8 +110,8 @@ class Bot(object):
         self.__sock.connect((self.__server, self.__port))
         try:
             # Register connection.
-            self.send_ircmsg("NICK %s" % self.nick)
-            self.send_ircmsg("USER %s 0 * :%s" % (self.nick, self.nick))
+            self.send_ircmsg_nick()
+            self.send_ircmsg_user()
 
             while not self.__is_stopping:
                 rs, _, _ = select.select([self.__sock], [], [])
@@ -119,11 +119,7 @@ class Bot(object):
                 # Read socket buffer, parse messages and handle them.
                 self.__recv_ircmsgs()
 
-            quit_msg = "QUIT"
-            if self.__quit_reason:
-                quit_msg += " :%s" % self.__quit_reason
-            self.send_ircmsg(quit_msg)
-
+            self.send_ircmsg_quit()
         finally:
             self.__sock.shutdown(socket.SHUT_RDWR)
 
@@ -136,6 +132,18 @@ class Bot(object):
             tail = text[i:i+max_tail_len]
             self.send_ircmsg("%s%s" % (head, tail))
             i += len(tail)
+
+    def send_ircmsg_nick(self):
+        self.send_ircmsg("NICK %s" % self.nick)
+
+    def send_ircmsg_quit(self):
+        quit_msg = "QUIT"
+        if self.__quit_reason:
+            quit_msg += " :%s" % self.__quit_reason
+        self.send_ircmsg(quit_msg)
+
+    def send_ircmsg_user(self):
+        self.send_ircmsg("USER %s 0 * :%s" % (self.nick, self.nick))
 
     def add_plugin_dir(self, plugin_dir):
         self.__plugin_dirs.add(plugin_dir)
