@@ -73,7 +73,33 @@ def recv_ircmsg_001(bot, prefix, this_irccmd, params):
     # the server might have truncated or otherwise modified
     # the nick we requested.
     bot.nick = params[0]
-    bot.send_ircmsg_join("JOIN %s" % channel)
+    bot.send_ircmsg_join(options.channel)
+
+def recv_ircmsg_privmsg(bot, prefix, this_irccmd, params):
+    nick, sep, host = prefix.partition("!")
+
+    target, text = params
+
+    if target == bot.nick:
+        # User-private messages are not supported and are silently
+        # ignored.
+        return
+
+    channel = target
+
+    # Ignore all leading whitespaces.
+    text = text.lstrip()
+
+    if not text.startswith("%s:" % bot.nick):
+        # The message is not designated to me, ignore.
+        return
+
+    # Strip my nick from the beginning of the text.
+    botcmdstr = text[len("%s:" % bot.nick):].lstrip()
+
+    botcmd, _, argstr = botcmdstr.partition(' ')
+
+    bot.eval_botcmd(nick, host, channel, botcmd, argstr)
 
 def parse_admin_arg(admin):
     admin_nick, sep, admin_host = admin.partition("!")
@@ -108,7 +134,10 @@ def parse_args():
                         "load multiple plugins")
     return parser.parse_args()
 
+options = None
+
 def main():
+    global options
     options = parse_args()
 
     if options.nick is None:
@@ -141,6 +170,7 @@ def main():
     bot.add_ircmsg_rx_cb(recv_ircmsg_ping, irccmd="PING")
     bot.add_ircmsg_rx_cb(recv_ircmsg_error, irccmd="ERROR")
     bot.add_ircmsg_rx_cb(recv_ircmsg_001, irccmd="001")
+    bot.add_ircmsg_rx_cb(recv_ircmsg_privmsg, irccmd="PRIVMSG")
 
     for admin_nick, admin_host in options.admins:
         bot.add_admin(admin_nick, admin_host)

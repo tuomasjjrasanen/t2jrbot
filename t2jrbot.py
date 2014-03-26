@@ -54,8 +54,6 @@ class Bot(object):
 
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        self.add_ircmsg_rx_cb(self.__recv_ircmsg_privmsg, irccmd="PRIVMSG")
-
     @property
     def admins(self):
         return set(self.__admins)
@@ -221,31 +219,11 @@ class Bot(object):
             cb = self.__recv_ircmsg_cbs[cb_index]
             cb(self, prefix, irccmd, params)
 
-    def __recv_ircmsg_privmsg(self, prefix, target, text):
-        nick, sep, host = prefix.partition("!")
-
-        if target == self.nick:
-            # User-private messages are not supported and are silently
-            # ignored.
-            return
-
-        channel = target
-
-        # Ignore all leading whitespaces.
-        text = text.lstrip()
-
-        if not text.startswith("%s:" % self.nick):
-            # The message is not designated to me, ignore.
-            return
-
-        # Strip my nick from the beginning of the text.
-        botcmdstr = text[len("%s:" % self.nick):].lstrip()
-
-        botcmd, _, argstr = botcmdstr.partition(' ')
+    def eval_botcmd(self, nick, host, channel, botcmd, argstr):
         try:
             botcmd_handler = self.__botcmd_handlers[botcmd]
         except KeyError:
-            # Silently ignore all but commands.
+            # Silently ignore all input except registered commands.
             return
 
         if not self.admin_check(nick, host, botcmd):
