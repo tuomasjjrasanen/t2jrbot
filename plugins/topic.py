@@ -35,10 +35,10 @@ def topic_log(bot, nick, host, channel, command, argstr):
     try:
         topic_log = topic_logs[channel]
     except KeyError:
-        bot.send_ircmsg_privmsg(channel, "%s: Topic log is empty." % nick)
+        bot.irc.send_privmsg(channel, "%s: Topic log is empty." % nick)
         return
     for i, topic in enumerate(topic_log):
-        bot.send_ircmsg_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
+        bot.irc.send_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
 def load(bot):
     bot.add_ircmsg_rx_cb(recv_ircmsg_topic, irccmd="TOPIC")

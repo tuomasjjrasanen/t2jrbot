@@ -28,7 +28,7 @@ import t2jrbot
 
 def botcmd_admin_list(bot, nick, host, channel, this_botcmd, argstr):
     admins = ["%s!%s" % (nick, host) for nick, host in bot.admins]
-    bot.send_ircmsg_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
+    bot.irc.send_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
 
 def botcmd_admin_add(bot, nick, host, channel, this_botcmd, argstr):
     admin_nick, admin_host = parse_admin_arg(argstr)
@@ -42,28 +42,28 @@ def botcmd_help(bot, nick, host, channel, this_botcmd, argstr):
     botcmd = argstr.strip()
     if not botcmd:
         botcmds = sorted(bot.botcmd_descriptions.keys())
-        bot.send_ircmsg_privmsg(channel,
-                                "%s: Commands: %s"
-                                % (nick, ", ".join(botcmds)))
-        bot.send_ircmsg_privmsg(channel,
-                                "%s: To get detailed help on a command, "
-                                "use %s COMMAND, e.g. %s %s"
-                                % (nick, this_botcmd, this_botcmd, this_botcmd))
+        bot.irc.send_privmsg(channel,
+                             "%s: Commands: %s"
+                             % (nick, ", ".join(botcmds)))
+        bot.irc.send_privmsg(channel,
+                             "%s: To get detailed help on a command, "
+                             "use %s COMMAND, e.g. %s %s"
+                             % (nick, this_botcmd, this_botcmd, this_botcmd))
     else:
         try:
             descr = bot.botcmd_descriptions[botcmd]
         except KeyError:
-            bot.send_ircmsg_privmsg(channel,
-                                    "%s: command '%s' not found" % (nick, botcmd))
+            bot.irc.send_privmsg(channel,
+                                 "%s: command '%s' not found" % (nick, botcmd))
         else:
-            bot.send_ircmsg_privmsg(channel, "%s: %s - %s"
-                                    % (nick, botcmd, descr))
+            bot.irc.send_privmsg(channel, "%s: %s - %s"
+                                 % (nick, botcmd, descr))
 
 def botcmd_quit(bot, nick, host, channel, this_botcmd, argstr):
     bot.quit(argstr)
 
 def recv_ircmsg_ping(bot, prefix, this_irccmd, params):
-    bot.send_ircmsg_pong()
+    bot.irc.send_pong(bot.nick)
 
 def recv_ircmsg_error(bot, prefix, this_irccmd, params):
     sys.exit(1)
@@ -73,7 +73,7 @@ def recv_ircmsg_001(bot, prefix, this_irccmd, params):
     # the server might have truncated or otherwise modified
     # the nick we requested.
     bot.nick = params[0]
-    bot.send_ircmsg_join(options.channel)
+    bot.irc.send_join(options.channel)
 
 def recv_ircmsg_privmsg(bot, prefix, this_irccmd, params):
     nick, sep, host = prefix.partition("!")

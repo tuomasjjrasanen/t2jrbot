@@ -32,15 +32,111 @@ CRLF = "\r\n"
 class Error(Exception):
     pass
 
+class IRC(object):
+
+    def __init__(self):
+        self.__recvbuf = ""
+        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def connect(self, server, port):
+        self.__sock.connect((server, port))
+
+    def fileno(self):
+        return self.__sock.fileno()
+
+    def __recv(self, msg):
+        prefix = ""
+
+        if msg.startswith(":"):
+            prefix, sep, msg = msg.partition(" ")
+            prefix = prefix[1:]
+            if sep != " ":
+                raise Error("received message has malformed prefix", sep)
+
+        command, _, paramstr = msg.partition(" ")
+
+        params = []
+        while paramstr:
+            if paramstr.startswith(":"):
+                param = paramstr[1:]
+                paramstr = ""
+            else:
+                param, _, paramstr = paramstr.partition(" ")
+            params.append(param)
+
+        return prefix, command, params
+
+    def recv(self):
+        retval = []
+
+        recvbuf = self.__sock.recv(4096)
+        if not recvbuf:
+            raise Error("receive failed, connection reset by peer")
+
+        # Concatenate old and new bufs.
+        self.__recvbuf += recvbuf
+
+        while True:
+            msg, sep, self.__recvbuf = self.__recvbuf.partition(CRLF)
+            if sep != CRLF:
+                # Save the incomplete msg for later concatenation.
+                self.__recvbuf = msg
+                break
+            self.__log("<=IRC", msg)
+
+            retval.append(self.__recv(msg))
+
+        return retval
+
+    def send(self, msg):
+        if len(msg) > MAX_MSG_LEN:
+            raise Error("message is too long to send", len(msg))
+        self.__log("=>IRC", msg)
+        self.__sock.sendall("%s%s" % (msg, CRLF))
+
+    def send_join(self, channel):
+        self.send("JOIN %s" % channel)
+
+    def send_nick(self, nick):
+        self.send("NICK %s" % nick)
+
+    def send_pong(self, nick):
+        self.send("PONG %s" % nick)
+
+    def send_privmsg(self, target, text):
+        head = "PRIVMSG %s :" % target
+        max_tail_len = MAX_MSG_LEN - len(head)
+
+        i = 0
+        while i < len(text):
+            tail = text[i:i+max_tail_len]
+            self.send("%s%s" % (head, tail))
+            i += len(tail)
+
+    def send_quit(self, reason):
+        quit_msg = "QUIT"
+        if reason:
+            quit_msg += " :%s" % reason
+        self.send(quit_msg)
+
+    def send_user(self, user, realname):
+        self.send("USER %s 0 * :%s" % (user, realname))
+
+    def shutdown(self):
+        self.__sock.shutdown(socket.SHUT_RDWR)
+
+    def __log(self, name, msg):
+        timestamp = datetime.datetime.utcnow().isoformat()
+        print(timestamp, name, msg)
+
 class Bot(object):
 
     def __init__(self, server, port, nick):
         self.__server = server
         self.__port = port
+        self.irc = IRC()
         self.nick = nick
         self.__admins = set()
-        self.__recvbuf = ""
-        self.__sock = None
         self.__botcmd_handlers = {}
         self.__botcmd_descriptions = {}
         self.__admin_botcmds = set()
@@ -51,8 +147,6 @@ class Bot(object):
 
         self.__recv_ircmsg_cbs_index_map = {}
         self.__recv_ircmsg_cbs = []
-
-        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     @property
     def admins(self):
@@ -107,43 +201,34 @@ class Bot(object):
         self.__admin_botcmds.discard(botcmd)
 
     def run(self):
-        self.__sock.connect((self.__server, self.__port))
+        self.irc.connect(self.__server, self.__port)
+
         try:
             # Register connection.
-            self.send_ircmsg_nick()
-            self.send_ircmsg_user()
+            self.irc.send_nick(self.nick)
+            self.irc.send_user(self.nick, self.nick)
 
             while not self.__is_stopping:
-                rs, _, _ = select.select([self.__sock], [], [])
+                rs, _, _ = select.select([self.irc], [], [])
 
                 # Read socket buffer, parse messages and handle them.
-                self.__recv_ircmsgs()
+                messages = self.irc.recv()
 
-            self.send_ircmsg_quit()
+                for prefix, irccmd, params in messages:
+                    cb_indices = set()
+
+                    cb_indices.update(self.__recv_ircmsg_cbs_index_map.get((None, None), set()),
+                                      self.__recv_ircmsg_cbs_index_map.get((prefix, None), set()),
+                                      self.__recv_ircmsg_cbs_index_map.get((None, irccmd), set()),
+                                      self.__recv_ircmsg_cbs_index_map.get((prefix, irccmd), set()))
+
+                    for cb_index in sorted(cb_indices):
+                        cb = self.__recv_ircmsg_cbs[cb_index]
+                        cb(self, prefix, irccmd, params)
+
+            self.irc.send_quit(self.__quit_reason)
         finally:
-            self.__sock.shutdown(socket.SHUT_RDWR)
-
-    def send_ircmsg_privmsg(self, target, text):
-        head = "PRIVMSG %s :" % target
-        max_tail_len = MAX_MSG_LEN - len(head)
-
-        i = 0
-        while i < len(text):
-            tail = text[i:i+max_tail_len]
-            self.send_ircmsg("%s%s" % (head, tail))
-            i += len(tail)
-
-    def send_ircmsg_nick(self):
-        self.send_ircmsg("NICK %s" % self.nick)
-
-    def send_ircmsg_quit(self):
-        quit_msg = "QUIT"
-        if self.__quit_reason:
-            quit_msg += " :%s" % self.__quit_reason
-        self.send_ircmsg(quit_msg)
-
-    def send_ircmsg_user(self):
-        self.send_ircmsg("USER %s 0 * :%s" % (self.nick, self.nick))
+            self.irc.shutdown()
 
     def add_plugin_dir(self, plugin_dir):
         self.__plugin_dirs.add(plugin_dir)
@@ -166,67 +251,6 @@ class Bot(object):
 
         return True
 
-    def send_ircmsg(self, msg):
-        if len(msg) > MAX_MSG_LEN:
-            raise Error("message is too long to send", len(msg))
-        self.__log("=>IRC", msg)
-        self.__sock.sendall("%s%s" % (msg, CRLF))
-
-    def send_ircmsg_pong(self):
-        self.send_ircmsg("PONG %s" % self.nick)
-
-    def send_ircmsg_join(self, channel):
-        self.send_ircmsg("JOIN %s" % channel)
-
-    def __recv_ircmsgs(self):
-        recvbuf = self.__sock.recv(4096)
-        if not recvbuf:
-            raise Error("receive failed, connection reset by peer")
-
-        # Concatenate old and new bufs.
-        self.__recvbuf += recvbuf
-
-        while True:
-            msg, sep, self.__recvbuf = self.__recvbuf.partition(CRLF)
-            if sep != CRLF:
-                # Save the incomplete msg for later concatenation.
-                self.__recvbuf = msg
-                break
-            self.__log("<=IRC", msg)
-
-            self.__recv_ircmsg(msg)
-
-    def __recv_ircmsg(self, msg):
-        prefix = ""
-
-        if msg.startswith(":"):
-            prefix, sep, msg = msg.partition(" ")
-            prefix = prefix[1:]
-            if sep != " ":
-                raise Error("received message has malformed prefix", sep)
-
-        irccmd, _, paramstr = msg.partition(" ")
-
-        params = []
-        while paramstr:
-            if paramstr.startswith(":"):
-                param = paramstr[1:]
-                paramstr = ""
-            else:
-                param, _, paramstr = paramstr.partition(" ")
-            params.append(param)
-
-        cb_indices = set()
-
-        cb_indices.update(self.__recv_ircmsg_cbs_index_map.get((None, None), set()),
-                          self.__recv_ircmsg_cbs_index_map.get((prefix, None), set()),
-                          self.__recv_ircmsg_cbs_index_map.get((None, irccmd), set()),
-                          self.__recv_ircmsg_cbs_index_map.get((prefix, irccmd), set()))
-
-        for cb_index in sorted(cb_indices):
-            cb = self.__recv_ircmsg_cbs[cb_index]
-            cb(self, prefix, irccmd, params)
-
     def eval_botcmd(self, nick, host, channel, botcmd, argstr):
         try:
             botcmd_handler = self.__botcmd_handlers[botcmd]
@@ -235,26 +259,19 @@ class Bot(object):
             return
 
         if not self.admin_check(nick, host, botcmd):
-            self.send_ircmsg_privmsg(channel,
-                                     "%s: only admins are allowed to %s"
-                                     % (nick, botcmd))
+            self.irc.send_privmsg(channel,
+                                  "%s: only admins are allowed to %s"
+                                  % (nick, botcmd))
             return
 
         try:
             botcmd_handler(self, nick, host, channel, botcmd, argstr)
         except Exception, e:
-            self.send_ircmsg_privmsg(channel,
-                                     "%s: error: %s" % (nick, e.message))
+            self.irc.send_privmsg(channel,
+                                  "%s: error: %s" % (nick, e.message))
 
     def admin_check(self, nick, host, botcmd):
         if botcmd not in self.__admin_botcmds:
             return True
 
         return (nick, host) in self.__admins
-
-    def __log(self, name, msg):
-        timestamp = datetime.datetime.utcnow().isoformat()
-        print(timestamp, name, msg)
-
-    def __del__(self):
-        self.__sock.close()
