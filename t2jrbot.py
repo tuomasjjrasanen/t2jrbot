@@ -26,13 +26,14 @@ import select
 import socket
 import sys
 
-MAX_MSG_LEN = 510
 CRLF = "\r\n"
 
 class Error(Exception):
     pass
 
 class IRC(object):
+
+    MAX_MSG_LEN = 510
 
     def __init__(self):
         self.__recvbuf = ""
@@ -89,7 +90,7 @@ class IRC(object):
         return retval
 
     def send(self, msg):
-        if len(msg) > MAX_MSG_LEN:
+        if len(msg) > IRC.MAX_MSG_LEN:
             raise Error("message is too long to send", len(msg))
         self.__log("=>IRC", msg)
         self.__sock.sendall("%s%s" % (msg, CRLF))
@@ -105,7 +106,7 @@ class IRC(object):
 
     def send_privmsg(self, target, text):
         head = "PRIVMSG %s :" % target
-        max_tail_len = MAX_MSG_LEN - len(head)
+        max_tail_len = IRC.MAX_MSG_LEN - len(head)
 
         i = 0
         while i < len(text):
