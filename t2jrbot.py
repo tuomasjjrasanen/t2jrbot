@@ -138,9 +138,9 @@ class Bot(object):
         self.irc = IRC()
         self.nick = nick
         self.__admins = set()
-        self.__botcmd_handlers = {}
-        self.__botcmd_descriptions = {}
-        self.__admin_botcmds = set()
+        self.__command_handlers = {}
+        self.__command_descriptions = {}
+        self.__admin_commands = set()
         self.__quit_reason = ""
         self.__is_stopping = False
         self.__plugins = {}
@@ -154,8 +154,8 @@ class Bot(object):
         return set(self.__admins)
 
     @property
-    def botcmd_descriptions(self):
-        return dict(self.__botcmd_descriptions)
+    def command_descriptions(self):
+        return dict(self.__command_descriptions)
 
     def add_admin(self, nick, host):
         self.__admins.add((nick, host))
@@ -185,21 +185,21 @@ class Bot(object):
         indices = self.__recv_ircmsg_cbs_index_map.setdefault(key, [])
         indices.append(i)
 
-    def register_botcmd(self, botcmd, handler, description="", require_admin=True):
-        if botcmd in self.__botcmd_handlers:
-            raise Error("command '%s' is already registered" % botcmd)
-        self.__botcmd_handlers[botcmd] = handler
-        self.__botcmd_descriptions[botcmd] = description
+    def register_command(self, command, handler, description="", require_admin=True):
+        if command in self.__command_handlers:
+            raise Error("command '%s' is already registered" % command)
+        self.__command_handlers[command] = handler
+        self.__command_descriptions[command] = description
         if require_admin:
-            self.__admin_botcmds.add(botcmd)
+            self.__admin_commands.add(command)
 
-    def unregister_botcmd(self, botcmd):
+    def unregister_command(self, command):
         try:
-            del self.__botcmd_handlers[botcmd]
+            del self.__command_handlers[command]
         except KeyError:
-            raise Error("command '%s' is not registered" % botcmd)
-        del self.__botcmd_descriptions[botcmd]
-        self.__admin_botcmds.discard(botcmd)
+            raise Error("command '%s' is not registered" % command)
+        del self.__command_descriptions[command]
+        self.__admin_commands.discard(command)
 
     def run(self):
         self.irc.connect(self.__server, self.__port)
@@ -252,27 +252,27 @@ class Bot(object):
 
         return True
 
-    def eval_botcmd(self, nick, host, channel, botcmd, argstr):
+    def eval_command(self, nick, host, channel, command, argstr):
         try:
-            botcmd_handler = self.__botcmd_handlers[botcmd]
+            command_handler = self.__command_handlers[command]
         except KeyError:
             # Silently ignore all input except registered commands.
             return
 
-        if not self.admin_check(nick, host, botcmd):
+        if not self.admin_check(nick, host, command):
             self.irc.send_privmsg(channel,
                                   "%s: only admins are allowed to %s"
-                                  % (nick, botcmd))
+                                  % (nick, command))
             return
 
         try:
-            botcmd_handler(self, nick, host, channel, botcmd, argstr)
+            command_handler(self, nick, host, channel, command, argstr)
         except Exception, e:
             self.irc.send_privmsg(channel,
                                   "%s: error: %s" % (nick, e.message))
 
-    def admin_check(self, nick, host, botcmd):
-        if botcmd not in self.__admin_botcmds:
+    def admin_check(self, nick, host, command):
+        if command not in self.__admin_commands:
             return True
 
         return (nick, host) in self.__admins

@@ -42,5 +42,5 @@ def topic_log(bot, nick, host, channel, command, argstr):
 
 def load(bot):
     bot.add_ircmsg_rx_cb(recv_ircmsg_topic, irccmd="TOPIC")
-    bot.register_botcmd("!topic_log", topic_log,
-                        "Show the topic log. Usage: !topic_log", False)
+    bot.register_command("!topic_log", topic_log,
+                         "Show the topic log. Usage: !topic_log", False)

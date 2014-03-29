@@ -26,40 +26,40 @@ import hashlib
 
 import t2jrbot
 
-def botcmd_admin_list(bot, nick, host, channel, this_botcmd, argstr):
+def command_admin_list(bot, nick, host, channel, this_command, argstr):
     admins = ["%s!%s" % (nick, host) for nick, host in bot.admins]
     bot.irc.send_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
 
-def botcmd_admin_add(bot, nick, host, channel, this_botcmd, argstr):
+def command_admin_add(bot, nick, host, channel, this_command, argstr):
     admin_nick, admin_host = parse_admin_arg(argstr)
     bot.add_admin(admin_nick, admin_host)
 
-def botcmd_admin_remove(bot, nick, host, channel, this_botcmd, argstr):
+def command_admin_remove(bot, nick, host, channel, this_command, argstr):
     admin_nick, admin_host = parse_admin_arg(argstr)
     bot.remove_admin(admin_nick, admin_host)
 
-def botcmd_help(bot, nick, host, channel, this_botcmd, argstr):
-    botcmd = argstr.strip()
-    if not botcmd:
-        botcmds = sorted(bot.botcmd_descriptions.keys())
+def command_help(bot, nick, host, channel, this_command, argstr):
+    command = argstr.strip()
+    if not command:
+        commands = sorted(bot.command_descriptions.keys())
         bot.irc.send_privmsg(channel,
                              "%s: Commands: %s"
-                             % (nick, ", ".join(botcmds)))
+                             % (nick, ", ".join(commands)))
         bot.irc.send_privmsg(channel,
                              "%s: To get detailed help on a command, "
                              "use %s COMMAND, e.g. %s %s"
-                             % (nick, this_botcmd, this_botcmd, this_botcmd))
+                             % (nick, this_command, this_command, this_command))
     else:
         try:
-            descr = bot.botcmd_descriptions[botcmd]
+            descr = bot.command_descriptions[command]
         except KeyError:
             bot.irc.send_privmsg(channel,
-                                 "%s: command '%s' not found" % (nick, botcmd))
+                                 "%s: command '%s' not found" % (nick, command))
         else:
             bot.irc.send_privmsg(channel, "%s: %s - %s"
-                                 % (nick, botcmd, descr))
+                                 % (nick, command, descr))
 
-def botcmd_quit(bot, nick, host, channel, this_botcmd, argstr):
+def command_quit(bot, nick, host, channel, this_command, argstr):
     bot.quit(argstr)
 
 def recv_ircmsg_ping(bot, prefix, this_irccmd, params):
@@ -95,11 +95,11 @@ def recv_ircmsg_privmsg(bot, prefix, this_irccmd, params):
         return
 
     # Strip my nick from the beginning of the text.
-    botcmdstr = text[len("%s:" % bot.nick):].lstrip()
+    commandstr = text[len("%s:" % bot.nick):].lstrip()
 
-    botcmd, _, argstr = botcmdstr.partition(' ')
+    command, _, argstr = commandstr.partition(' ')
 
-    bot.eval_botcmd(nick, host, channel, botcmd, argstr)
+    bot.eval_command(nick, host, channel, command, argstr)
 
 def parse_admin_arg(admin):
     admin_nick, sep, admin_host = admin.partition("!")
@@ -149,23 +149,23 @@ def main():
     bot = t2jrbot.Bot(options.server, options.port, options.nick)
 
     # Built-in bot commands.
-    bot.register_botcmd("!admin_list", botcmd_admin_list,
-                        "List bot admins. Usage: !admin_list",
-                        require_admin=False)
-    bot.register_botcmd("!admin_add", botcmd_admin_add,
-                        "Add a bot admin. Usage: !admin_add NICK!USER@HOST, "
-                        "e.g. !admin_add fanatic!fan.atic@example.org")
-    bot.register_botcmd("!admin_remove", botcmd_admin_remove,
-                        "Remove a bot admin. Usage: !admin_remove NICK!USER@HOST, "
-                        "e.g. !admin_remove fanatic!fan.atic@example.org")
-    bot.register_botcmd("!help", botcmd_help,
-                        "Since you got this far, "
-                        "you already know what this command does.",
-                        require_admin=False)
-    bot.register_botcmd("!quit", botcmd_quit, "Quits the bot, "
-                        "optionally with a message. "
-                        "Usage: !quit [MESSAGE], "
-                        "e.g. !quit So Long, and Thanks for All the Fish!")
+    bot.register_command("!admin_list", command_admin_list,
+                         "List bot admins. Usage: !admin_list",
+                         require_admin=False)
+    bot.register_command("!admin_add", command_admin_add,
+                         "Add a bot admin. Usage: !admin_add NICK!USER@HOST, "
+                         "e.g. !admin_add fanatic!fan.atic@example.org")
+    bot.register_command("!admin_remove", command_admin_remove,
+                         "Remove a bot admin. Usage: !admin_remove NICK!USER@HOST, "
+                         "e.g. !admin_remove fanatic!fan.atic@example.org")
+    bot.register_command("!help", command_help,
+                         "Since you got this far, "
+                         "you already know what this command does.",
+                         require_admin=False)
+    bot.register_command("!quit", command_quit, "Quits the bot, "
+                         "optionally with a message. "
+                         "Usage: !quit [MESSAGE], "
+                         "e.g. !quit So Long, and Thanks for All the Fish!")
 
     bot.add_ircmsg_rx_cb(recv_ircmsg_ping, irccmd="PING")
     bot.add_ircmsg_rx_cb(recv_ircmsg_error, irccmd="ERROR")
