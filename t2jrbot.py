@@ -135,7 +135,7 @@ class Bot(object):
     def __init__(self, server, port, nick):
         self.__server = server
         self.__port = port
-        self.irc = IRC()
+        self.__irc = IRC()
         self.nick = nick
         self.__admins = set()
         self.__command_handlers = {}
@@ -148,6 +148,10 @@ class Bot(object):
 
         self.__irc_callbacks_index_map = {}
         self.__irc_callbacks = []
+
+        self.send_irc_privmsg = self.__irc.send_privmsg
+        self.send_irc_pong = self.__irc.send_pong
+        self.send_irc_join = self.__irc.send_join
 
     @property
     def admins(self):
@@ -202,18 +206,18 @@ class Bot(object):
         self.__admin_commands.discard(command)
 
     def run(self):
-        self.irc.connect(self.__server, self.__port)
+        self.__irc.connect(self.__server, self.__port)
 
         try:
             # Register connection.
-            self.irc.send_nick(self.nick)
-            self.irc.send_user(self.nick, self.nick)
+            self.__irc.send_nick(self.nick)
+            self.__irc.send_user(self.nick, self.nick)
 
             while not self.__is_stopping:
-                rs, _, _ = select.select([self.irc], [], [])
+                rs, _, _ = select.select([self.__irc], [], [])
 
                 # Read socket buffer, parse messages and handle them.
-                messages = self.irc.recv()
+                messages = self.__irc.recv()
 
                 for prefix, irccmd, params in messages:
                     callback_indices = set()
@@ -228,9 +232,9 @@ class Bot(object):
                         callback = self.__irc_callbacks[callback_index]
                         callback(self, prefix, irccmd, params)
 
-            self.irc.send_quit(self.__quit_reason)
+            self.__irc.send_quit(self.__quit_reason)
         finally:
-            self.irc.shutdown()
+            self.__irc.shutdown()
 
     def add_plugin_dir(self, plugin_dir):
         self.__plugin_dirs.add(plugin_dir)
@@ -261,16 +265,16 @@ class Bot(object):
             return
 
         if not self.admin_check(nick, host, command):
-            self.irc.send_privmsg(channel,
-                                  "%s: only admins are allowed to %s"
-                                  % (nick, command))
+            self.__irc.send_privmsg(channel,
+                                    "%s: only admins are allowed to %s"
+                                    % (nick, command))
             return
 
         try:
             command_handler(self, nick, host, channel, command, argstr)
         except Exception, e:
-            self.irc.send_privmsg(channel,
-                                  "%s: error: %s" % (nick, e.message))
+            self.__irc.send_privmsg(channel,
+                                    "%s: error: %s" % (nick, e.message))
 
     def admin_check(self, nick, host, command):
         if command not in self.__admin_commands:

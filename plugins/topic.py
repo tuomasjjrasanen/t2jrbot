@@ -35,10 +35,10 @@ def topic_log(bot, nick, host, channel, command, argstr):
     try:
         topic_log = topic_logs[channel]
     except KeyError:
-        bot.irc.send_privmsg(channel, "%s: Topic log is empty." % nick)
+        bot.send_irc_privmsg(channel, "%s: Topic log is empty." % nick)
         return
     for i, topic in enumerate(topic_log):
-        bot.irc.send_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
+        bot.send_irc_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
 def load(bot):
     bot.add_irc_callback(irc_topic, irccmd="TOPIC")

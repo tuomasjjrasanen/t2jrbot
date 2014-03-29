@@ -28,7 +28,7 @@ import t2jrbot
 
 def command_admin_list(bot, nick, host, channel, this_command, argstr):
     admins = ["%s!%s" % (nick, host) for nick, host in bot.admins]
-    bot.irc.send_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
+    bot.send_irc_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
 
 def command_admin_add(bot, nick, host, channel, this_command, argstr):
     admin_nick, admin_host = parse_admin_arg(argstr)
@@ -42,10 +42,10 @@ def command_help(bot, nick, host, channel, this_command, argstr):
     command = argstr.strip()
     if not command:
         commands = sorted(bot.command_descriptions.keys())
-        bot.irc.send_privmsg(channel,
+        bot.send_irc_privmsg(channel,
                              "%s: Commands: %s"
                              % (nick, ", ".join(commands)))
-        bot.irc.send_privmsg(channel,
+        bot.send_irc_privmsg(channel,
                              "%s: To get detailed help on a command, "
                              "use %s COMMAND, e.g. %s %s"
                              % (nick, this_command, this_command, this_command))
@@ -53,17 +53,17 @@ def command_help(bot, nick, host, channel, this_command, argstr):
         try:
             descr = bot.command_descriptions[command]
         except KeyError:
-            bot.irc.send_privmsg(channel,
+            bot.send_irc_privmsg(channel,
                                  "%s: command '%s' not found" % (nick, command))
         else:
-            bot.irc.send_privmsg(channel, "%s: %s - %s"
+            bot.send_irc_privmsg(channel, "%s: %s - %s"
                                  % (nick, command, descr))
 
 def command_quit(bot, nick, host, channel, this_command, argstr):
     bot.quit(argstr)
 
 def irc_ping(bot, prefix, this_irccmd, params):
-    bot.irc.send_pong(bot.nick)
+    bot.send_irc_pong(bot.nick)
 
 def irc_error(bot, prefix, this_irccmd, params):
     sys.exit(1)
@@ -73,7 +73,7 @@ def irc_001(bot, prefix, this_irccmd, params):
     # the server might have truncated or otherwise modified
     # the nick we requested.
     bot.nick = params[0]
-    bot.irc.send_join(options.channel)
+    bot.send_irc_join(options.channel)
 
 def irc_privmsg(bot, prefix, this_irccmd, params):
     nick, sep, host = prefix.partition("!")
