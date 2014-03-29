@@ -23,7 +23,7 @@ from __future__ import print_function
 MAX_TOPIC_LOG_LEN = 3
 topic_logs = {}
 
-def recv_ircmsg_topic(bot, prefix, cmd, params):
+def irc_topic(bot, prefix, cmd, params):
     channel, topic = params
     nick, sep, host = prefix.partition("!")
     topic_log = topic_logs.setdefault(channel, [])
@@ -41,6 +41,6 @@ def topic_log(bot, nick, host, channel, command, argstr):
         bot.irc.send_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
 def load(bot):
-    bot.add_ircmsg_rx_cb(recv_ircmsg_topic, irccmd="TOPIC")
+    bot.add_irc_callback(irc_topic, irccmd="TOPIC")
     bot.register_command("!topic_log", topic_log,
                          "Show the topic log. Usage: !topic_log", False)

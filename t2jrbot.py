@@ -146,8 +146,8 @@ class Bot(object):
         self.__plugins = {}
         self.__plugin_dirs = set()
 
-        self.__recv_ircmsg_cbs_index_map = {}
-        self.__recv_ircmsg_cbs = []
+        self.__irc_callbacks_index_map = {}
+        self.__irc_callbacks = []
 
     @property
     def admins(self):
@@ -168,10 +168,10 @@ class Bot(object):
         self.__quit_reason = reason
         self.__is_stopping = True
 
-    def add_ircmsg_rx_cb(self, cb, prefix=None, irccmd=None):
+    def add_irc_callback(self, callback, prefix=None, irccmd=None):
         """Add a callable to the list of IRC RX callbacks.
 
-        The callback `cb` will be called whenever an IRC message
+        The callback `callback` will be called whenever an IRC message
         matching given `prefix` and `irccmd` has been received. If
         `prefix` and/or `irccmd` is None, they are treated as wildcards
         matching any value.
@@ -179,10 +179,10 @@ class Bot(object):
         Callbacks are called in the order they added to the list.
 
         """
-        i = len(self.__recv_ircmsg_cbs)
-        self.__recv_ircmsg_cbs.append(cb)
+        i = len(self.__irc_callbacks)
+        self.__irc_callbacks.append(callback)
         key = (prefix, irccmd)
-        indices = self.__recv_ircmsg_cbs_index_map.setdefault(key, [])
+        indices = self.__irc_callbacks_index_map.setdefault(key, [])
         indices.append(i)
 
     def register_command(self, command, handler, description="", require_admin=True):
@@ -216,16 +216,17 @@ class Bot(object):
                 messages = self.irc.recv()
 
                 for prefix, irccmd, params in messages:
-                    cb_indices = set()
+                    callback_indices = set()
 
-                    cb_indices.update(self.__recv_ircmsg_cbs_index_map.get((None, None), set()),
-                                      self.__recv_ircmsg_cbs_index_map.get((prefix, None), set()),
-                                      self.__recv_ircmsg_cbs_index_map.get((None, irccmd), set()),
-                                      self.__recv_ircmsg_cbs_index_map.get((prefix, irccmd), set()))
+                    callback_indices.update(
+                        self.__irc_callbacks_index_map.get((None, None), set()),
+                        self.__irc_callbacks_index_map.get((prefix, None), set()),
+                        self.__irc_callbacks_index_map.get((None, irccmd), set()),
+                        self.__irc_callbacks_index_map.get((prefix, irccmd), set()))
 
-                    for cb_index in sorted(cb_indices):
-                        cb = self.__recv_ircmsg_cbs[cb_index]
-                        cb(self, prefix, irccmd, params)
+                    for callback_index in sorted(callback_indices):
+                        callback = self.__irc_callbacks[callback_index]
+                        callback(self, prefix, irccmd, params)
 
             self.irc.send_quit(self.__quit_reason)
         finally:
