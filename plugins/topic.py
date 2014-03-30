@@ -20,27 +20,33 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-MAX_TOPIC_LOG_LEN = 3
-topic_logs = {}
+class TopicPlugin(object):
 
-def irc_topic(bot, prefix, cmd, params):
-    channel, topic = params
-    nick, sep, host = prefix.partition("!")
-    topic_log = topic_logs.setdefault(channel, [])
-    topic_log.insert(0, topic)
-    if len(topic_log) > MAX_TOPIC_LOG_LEN:
-        oldest_topic = topic_log.pop()
+    def __init__(self, bot, max_topic_log_len=3):
+        self.bot = bot
+        self.topic_logs = {} # Maps channels to lists of topics.
+        self.max_topic_log_len = max_topic_log_len
 
-def topic_log(bot, nick, host, channel, command, argstr):
-    try:
-        topic_log = topic_logs[channel]
-    except KeyError:
-        bot.send_irc_privmsg(channel, "%s: Topic log is empty." % nick)
-        return
-    for i, topic in enumerate(topic_log):
-        bot.send_irc_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
+        self.bot.add_irc_callback(self.irc_topic_callback, irccmd="TOPIC")
+
+        self.bot.register_command("!topic_log", self.command_topic_log,
+                                  "Show the topic log. Usage: !topic_log")
+
+    def irc_topic_callback(self, prefix, cmd, params):
+        channel, topic = params
+        nick, sep, host = prefix.partition("!")
+        topic_log = self.topic_logs.setdefault(channel, [])
+        topic_log.insert(0, topic)
+        del topic_log[self.max_topic_log_len:]
+
+    def command_topic_log(self, nick, host, channel, command, argstr):
+        try:
+            topic_log = self.topic_logs[channel]
+        except KeyError:
+            self.bot.send_irc_privmsg(channel, "%s: Topic log is empty." % nick)
+            return
+        for i, topic in enumerate(topic_log):
+            self.bot.send_irc_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
 def load(bot):
-    bot.add_irc_callback(irc_topic, irccmd="TOPIC")
-    bot.register_command("!topic_log", topic_log,
-                         "Show the topic log. Usage: !topic_log", False)
+    return TopicPlugin(bot)

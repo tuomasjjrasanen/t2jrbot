@@ -28,8 +28,7 @@ Usage
 
 To launch the bot, run::
 
-  t2jrbot --admin 'nick!user@example.org' \
-          --port 6667 \
+  t2jrbot --port 6667 \
           --nick myt2jrbot \
           irc.example.org '#mychannel'
 

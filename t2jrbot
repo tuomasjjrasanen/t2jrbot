@@ -26,18 +26,6 @@ import hashlib
 
 import t2jrbot
 
-def command_admin_list(bot, nick, host, channel, this_command, argstr):
-    admins = ["%s!%s" % (nick, host) for nick, host in bot.admins]
-    bot.send_irc_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
-
-def command_admin_add(bot, nick, host, channel, this_command, argstr):
-    admin_nick, admin_host = parse_admin_arg(argstr)
-    bot.add_admin(admin_nick, admin_host)
-
-def command_admin_remove(bot, nick, host, channel, this_command, argstr):
-    admin_nick, admin_host = parse_admin_arg(argstr)
-    bot.remove_admin(admin_nick, admin_host)
-
 def command_help(bot, nick, host, channel, this_command, argstr):
     command = argstr.strip()
     if not command:
@@ -101,15 +89,6 @@ def irc_privmsg(bot, prefix, this_irccmd, params):
 
     bot.eval_command(nick, host, channel, command, argstr)
 
-def parse_admin_arg(admin):
-    admin_nick, sep, admin_host = admin.partition("!")
-    admin_nick = admin_nick.strip()
-    admin_host = admin_host.strip()
-    if not admin_nick or not sep or not admin_host:
-        raise argparse.ArgumentTypeError("malformed admin identifier, should "
-                                         "be of form 'nick!user@example.org'")
-    return admin_nick, admin_host
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Simple but elegant IRC bot")
     parser.add_argument("-p", "--port", type=int, default=6667,
@@ -120,10 +99,6 @@ def parse_args():
                         help="channel which bot joins after a connection is established")
     parser.add_argument("-n", "--nick", default=None,
                         help="nickname of the bot")
-    parser.add_argument("-a", "--admin", action="append", dest="admins", default=[],
-                        type=parse_admin_arg, metavar="ADMIN",
-                        help="admin of the bot (e.g. 'nick!user@example.org'), "
-                        "can be given multiple times to add multiple admins")
     parser.add_argument("-L", "--plugin-dir", action="append", dest="plugin_dirs",
                         default=[], metavar="PLUGIN_DIR",
                         help="add plugin directory, can be given multiple times "
@@ -149,19 +124,9 @@ def main():
     bot = t2jrbot.Bot(options.server, options.port, options.nick)
 
     # Built-in bot commands.
-    bot.register_command("!admin_list", command_admin_list,
-                         "List bot admins. Usage: !admin_list",
-                         require_admin=False)
-    bot.register_command("!admin_add", command_admin_add,
-                         "Add a bot admin. Usage: !admin_add NICK!USER@HOST, "
-                         "e.g. !admin_add fanatic!fan.atic@example.org")
-    bot.register_command("!admin_remove", command_admin_remove,
-                         "Remove a bot admin. Usage: !admin_remove NICK!USER@HOST, "
-                         "e.g. !admin_remove fanatic!fan.atic@example.org")
     bot.register_command("!help", command_help,
                          "Since you got this far, "
-                         "you already know what this command does.",
-                         require_admin=False)
+                         "you already know what this command does.")
     bot.register_command("!quit", command_quit, "Quits the bot, "
                          "optionally with a message. "
                          "Usage: !quit [MESSAGE], "
@@ -171,9 +136,6 @@ def main():
     bot.add_irc_callback(irc_error, irccmd="ERROR")
     bot.add_irc_callback(irc_001, irccmd="001")
     bot.add_irc_callback(irc_privmsg, irccmd="PRIVMSG")
-
-    for admin_nick, admin_host in options.admins:
-        bot.add_admin(admin_nick, admin_host)
 
     for plugin_dir in options.plugin_dirs:
         bot.add_plugin_dir(plugin_dir)

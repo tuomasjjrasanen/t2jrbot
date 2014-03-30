@@ -137,10 +137,8 @@ class Bot(object):
         self.__port = port
         self.__irc = IRC()
         self.nick = nick
-        self.__admins = set()
         self.__command_handlers = {}
         self.__command_descriptions = {}
-        self.__admin_commands = set()
         self.__quit_reason = ""
         self.__is_stopping = False
         self.__plugins = {}
@@ -154,18 +152,12 @@ class Bot(object):
         self.send_irc_join = self.__irc.send_join
 
     @property
-    def admins(self):
-        return set(self.__admins)
+    def plugins(self):
+        return dict(self.__plugins)
 
     @property
     def command_descriptions(self):
         return dict(self.__command_descriptions)
-
-    def add_admin(self, nick, host):
-        self.__admins.add((nick, host))
-
-    def remove_admin(self, nick, host):
-        self.__admins.discard((nick, host))
 
     def quit(self, reason=""):
         # The actual quit is postponed until the main loop has finished.
@@ -189,13 +181,11 @@ class Bot(object):
         indices = self.__irc_callbacks_index_map.setdefault(key, [])
         indices.append(i)
 
-    def register_command(self, command, handler, description="", require_admin=True):
+    def register_command(self, command, handler, description=""):
         if command in self.__command_handlers:
             raise Error("command '%s' is already registered" % command)
         self.__command_handlers[command] = handler
         self.__command_descriptions[command] = description
-        if require_admin:
-            self.__admin_commands.add(command)
 
     def unregister_command(self, command):
         try:
@@ -203,7 +193,6 @@ class Bot(object):
         except KeyError:
             raise Error("command '%s' is not registered" % command)
         del self.__command_descriptions[command]
-        self.__admin_commands.discard(command)
 
     def run(self):
         self.__irc.connect(self.__server, self.__port)
@@ -230,7 +219,7 @@ class Bot(object):
 
                     for callback_index in sorted(callback_indices):
                         callback = self.__irc_callbacks[callback_index]
-                        callback(self, prefix, irccmd, params)
+                        callback(prefix, irccmd, params)
 
             self.__irc.send_quit(self.__quit_reason)
         finally:
@@ -246,10 +235,10 @@ class Bot(object):
         orig_sys_path = list(sys.path)
         try:
             sys.path.extend(self.__plugin_dirs)
-            plugin = importlib.import_module(plugin_name)
+            plugin_module = importlib.import_module(plugin_name)
             del sys.modules[plugin_name]
 
-            plugin.load(self)
+            plugin = plugin_module.load(self)
 
             self.__plugins[plugin_name] = plugin
         finally:
@@ -264,20 +253,8 @@ class Bot(object):
             # Silently ignore all input except registered commands.
             return
 
-        if not self.admin_check(nick, host, command):
-            self.__irc.send_privmsg(channel,
-                                    "%s: only admins are allowed to %s"
-                                    % (nick, command))
-            return
-
         try:
-            command_handler(self, nick, host, channel, command, argstr)
+            command_handler(nick, host, channel, command, argstr)
         except Exception, e:
             self.__irc.send_privmsg(channel,
                                     "%s: error: %s" % (nick, e.message))
-
-    def admin_check(self, nick, host, command):
-        if command not in self.__admin_commands:
-            return True
-
-        return (nick, host) in self.__admins
