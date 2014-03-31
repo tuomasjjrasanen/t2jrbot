@@ -22,7 +22,7 @@ from __future__ import print_function
 
 class TopicPlugin(object):
 
-    def __init__(self, bot, max_topic_log_len=3):
+    def __init__(self, bot, max_topic_log_len):
         self.bot = bot
         self.topic_logs = {} # Maps channels to lists of topics.
         self.max_topic_log_len = max_topic_log_len
@@ -48,5 +48,6 @@ class TopicPlugin(object):
         for i, topic in enumerate(topic_log):
             self.bot.send_irc_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
-def load(bot):
-    return TopicPlugin(bot)
+def load(bot, conf):
+    max_topic_log_len = int(conf.get("max_topic_log_len", 3))
+    return TopicPlugin(bot, max_topic_log_len)

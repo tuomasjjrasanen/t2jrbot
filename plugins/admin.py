@@ -86,5 +86,13 @@ class AdminPlugin(object):
         admin_nick, admin_host = parse_admin_arg(argstr)
         self.admins.discard((admin_nick, admin_host))
 
-def load(bot):
-    return AdminPlugin(bot)
+def load(bot, conf):
+    admins = [parse_admin_arg(a) for a in conf.get("admins", "").splitlines()]
+    admin_commands = conf.get("admin_commands", "").splitlines()
+
+    plugin = AdminPlugin(bot)
+
+    plugin.admins.update(admins)
+    plugin.admin_commands.update(admin_commands)
+
+    return plugin

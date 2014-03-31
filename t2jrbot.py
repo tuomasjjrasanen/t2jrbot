@@ -132,11 +132,12 @@ class IRC(object):
 
 class Bot(object):
 
-    def __init__(self, server, port, nick):
+    def __init__(self, server, port, nick, channel):
         self.__server = server
         self.__port = port
         self.__irc = IRC()
         self.nick = nick
+        self.channel = channel
         self.__command_handlers = {}
         self.__command_descriptions = {}
         self.__quit_reason = ""
@@ -228,7 +229,7 @@ class Bot(object):
     def add_plugin_dir(self, plugin_dir):
         self.__plugin_dirs.add(plugin_dir)
 
-    def load_plugin(self, plugin_name):
+    def load_plugin(self, plugin_name, conf):
         if plugin_name in self.__plugins:
             return False
 
@@ -238,7 +239,7 @@ class Bot(object):
             plugin_module = importlib.import_module(plugin_name)
             del sys.modules[plugin_name]
 
-            plugin = plugin_module.load(self)
+            plugin = plugin_module.load(self, conf)
 
             self.__plugins[plugin_name] = plugin
         finally:

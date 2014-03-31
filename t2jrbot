@@ -22,6 +22,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import ConfigParser
 import hashlib
 
 import t2jrbot
@@ -61,7 +62,7 @@ def irc_001(bot, prefix, this_irccmd, params):
     # the server might have truncated or otherwise modified
     # the nick we requested.
     bot.nick = params[0]
-    bot.send_irc_join(options.channel)
+    bot.send_irc_join(bot.channel)
 
 def irc_privmsg(bot, prefix, this_irccmd, params):
     nick, sep, host = prefix.partition("!")
@@ -91,37 +92,43 @@ def irc_privmsg(bot, prefix, this_irccmd, params):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Simple but elegant IRC bot")
-    parser.add_argument("-p", "--port", type=int, default=6667,
-                        help="port of the server which bot connects to, default=6667")
-    parser.add_argument("server", metavar="SERVER",
-                        help="address of the server which bot connects to")
-    parser.add_argument("channel", metavar="CHANNEL",
-                        help="channel which bot joins after a connection is established")
-    parser.add_argument("-n", "--nick", default=None,
-                        help="nickname of the bot")
-    parser.add_argument("-L", "--plugin-dir", action="append", dest="plugin_dirs",
-                        default=[], metavar="PLUGIN_DIR",
-                        help="add plugin directory, can be given multiple times "
-                        "to add multiple directories")
-    parser.add_argument("-l", "--load-plugin", action="append", dest="plugin_names",
-                        default=[], metavar="PLUGIN",
-                        help="load plugin, can be given multiple times to "
-                        "load multiple plugins")
+    parser.add_argument("config_file", metavar="CONFIG_FILE",
+                        help="configuration file")
     return parser.parse_args()
 
-options = None
+def parse_conf(filepath):
+    bot_conf = {}
+    plugins_conf = {}
+
+    config_parser = ConfigParser.RawConfigParser()
+    config_parser.read(filepath)
+
+    for section in config_parser.sections():
+        if section == "bot":
+            bot_conf.update(dict(config_parser.items(section)))
+            continue
+
+        if section.startswith("plugins."):
+            plugin_name = section.lstrip("plugins.")
+            plugin_conf = plugins_conf.setdefault(plugin_name, {})
+            plugin_conf.update(dict(config_parser.items(section)))
+            continue
+
+    return bot_conf, plugins_conf
 
 def main():
-    global options
     options = parse_args()
 
-    if options.nick is None:
-        md5 = hashlib.md5()
-        md5.update(options.server)
-        md5.update(options.channel)
-        options.nick = "t2jrbot_%s" % md5.hexdigest()
+    bot_conf, plugins_conf = parse_conf(options.config_file)
 
-    bot = t2jrbot.Bot(options.server, options.port, options.nick)
+    server = bot_conf.get("server", "localhost")
+    port = int(bot_conf.get("port", 6667))
+    nick = bot_conf.get("nick", "t2jrbot")
+    channel = bot_conf.get("channel", "#t2jrbot")
+    plugin_dirs = bot_conf.get("plugin_dirs", "").splitlines()
+    plugins = bot_conf.get("plugins", "").splitlines()
+
+    bot = t2jrbot.Bot(server, port, nick, channel)
 
     # Built-in bot commands.
     bot.register_command("!help", command_help,
@@ -137,11 +144,11 @@ def main():
     bot.add_irc_callback(irc_001, irccmd="001")
     bot.add_irc_callback(irc_privmsg, irccmd="PRIVMSG")
 
-    for plugin_dir in options.plugin_dirs:
+    for plugin_dir in plugin_dirs:
         bot.add_plugin_dir(plugin_dir)
 
-    for plugin_name in set(options.plugin_names):
-        bot.load_plugin(plugin_name)
+    for plugin_name in plugins:
+        bot.load_plugin(plugin_name, plugins_conf.get(plugin_name, {}))
 
     bot.run()
 
