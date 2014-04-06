@@ -30,7 +30,7 @@ def admin_eval_command(bot, nick, host, channel, command, argstr):
         ((nick, host) in admin_plugin.admins)):
         return admin_plugin._orig_eval_command(nick, host, channel, command, argstr)
 
-    bot.send_irc_privmsg(channel,
+    bot.irc.send_privmsg(channel,
                          "%s: only admins are allowed to %s" % (nick, command))
 
     return
@@ -69,7 +69,7 @@ class AdminPlugin(object):
 
     def command_admin_list(self, nick, host, channel, this_command, argstr):
         admins = ["%s!%s" % (nick, host) for nick, host in self.admins]
-        self.bot.send_irc_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
+        self.bot.irc.send_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
 
     def command_admin_add(self, nick, host, channel, this_command, argstr):
         admin_nick, admin_host = self.parse_admin_arg(argstr)

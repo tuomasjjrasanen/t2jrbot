@@ -33,7 +33,7 @@ class AutojoinPlugin(object):
         # the server might have truncated or otherwise modified
         # the nick we requested.
         self.bot.nick = params[0]
-        self.bot.send_irc_join(self.channel)
+        self.bot.irc.send_join(self.channel)
 
 def load(bot, conf):
     channel = conf.get("channel", "#t2jrbot")

@@ -32,7 +32,7 @@ class QuitPlugin(object):
 
     def command_quit(self, nick, host, channel, this_command, argstr):
         self.bot.stop()
-        self.bot.send_irc_quit(argstr)
+        self.bot.irc.send_quit(argstr)
 
 def load(bot, conf):
     return QuitPlugin(bot)

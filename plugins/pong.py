@@ -28,7 +28,7 @@ class PongPlugin(object):
         self.bot.add_irc_callback(self.irc_ping, irccmd="PING")
 
     def irc_ping(self, prefix, this_irccmd, params):
-        self.bot.send_irc_pong(self.bot.nick)
+        self.bot.irc.send_pong(self.bot.nick)
 
 def load(bot, conf):
     return PongPlugin(bot)

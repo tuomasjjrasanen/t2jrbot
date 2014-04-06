@@ -33,10 +33,10 @@ class HelpPlugin(object):
         command = argstr.strip()
         if not command:
             commands = sorted(self.bot.command_descriptions.keys())
-            self.bot.send_irc_privmsg(channel,
+            self.bot.irc.send_privmsg(channel,
                                       "%s: Commands: %s"
                                       % (nick, ", ".join(commands)))
-            self.bot.send_irc_privmsg(channel,
+            self.bot.irc.send_privmsg(channel,
                                       "%s: To get detailed help on a command, "
                                       "use %s COMMAND, e.g. %s %s"
                                       % (nick, this_command, this_command, this_command))
@@ -44,10 +44,10 @@ class HelpPlugin(object):
             try:
                 descr = self.bot.command_descriptions[command]
             except KeyError:
-                self.bot.send_irc_privmsg(channel,
+                self.bot.irc.send_privmsg(channel,
                                           "%s: command '%s' not found" % (nick, command))
             else:
-                self.bot.send_irc_privmsg(channel, "%s: %s - %s"
+                self.bot.irc.send_privmsg(channel, "%s: %s - %s"
                                           % (nick, command, descr))
 
 def load(bot, conf):

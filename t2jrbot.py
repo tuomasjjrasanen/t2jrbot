@@ -135,7 +135,7 @@ class Bot(object):
     def __init__(self, server, port, nick):
         self.__server = server
         self.__port = port
-        self.__irc = IRC()
+        self.irc = IRC()
         self.nick = nick
         self.__command_handlers = {}
         self.__command_descriptions = {}
@@ -145,10 +145,6 @@ class Bot(object):
 
         self.__irc_callbacks_index_map = {}
         self.__irc_callbacks = []
-
-        self.send_irc_privmsg = self.__irc.send_privmsg
-        self.send_irc_pong = self.__irc.send_pong
-        self.send_irc_join = self.__irc.send_join
 
     @property
     def plugins(self):
@@ -192,18 +188,18 @@ class Bot(object):
         del self.__command_descriptions[command]
 
     def run(self):
-        self.__irc.connect(self.__server, self.__port)
+        self.irc.connect(self.__server, self.__port)
 
         try:
             # Register connection.
-            self.__irc.send_nick(self.nick)
-            self.__irc.send_user(self.nick, self.nick)
+            self.irc.send_nick(self.nick)
+            self.irc.send_user(self.nick, self.nick)
 
             while not self.__is_stopping:
-                rs, _, _ = select.select([self.__irc], [], [])
+                rs, _, _ = select.select([self.irc], [], [])
 
                 # Read socket buffer, parse messages and handle them.
-                messages = self.__irc.recv()
+                messages = self.irc.recv()
 
                 for prefix, irccmd, params in messages:
                     callback_indices = set()
@@ -218,7 +214,7 @@ class Bot(object):
                         callback = self.__irc_callbacks[callback_index]
                         callback(prefix, irccmd, params)
         finally:
-            self.__irc.shutdown()
+            self.irc.shutdown()
 
     def add_plugin_dir(self, plugin_dir):
         self.__plugin_dirs.add(plugin_dir)
@@ -251,5 +247,5 @@ class Bot(object):
         try:
             command_handler(nick, host, channel, command, argstr)
         except Exception, e:
-            self.__irc.send_privmsg(channel,
-                                    "%s: error: %s" % (nick, e.message))
+            self.irc.send_privmsg(channel,
+                                  "%s: error: %s" % (nick, e.message))

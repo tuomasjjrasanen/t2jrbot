@@ -43,10 +43,10 @@ class TopicPlugin(object):
         try:
             topic_log = self.topic_logs[channel]
         except KeyError:
-            self.bot.send_irc_privmsg(channel, "%s: Topic log is empty." % nick)
+            self.bot.irc.send_privmsg(channel, "%s: Topic log is empty." % nick)
             return
         for i, topic in enumerate(topic_log):
-            self.bot.send_irc_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
+            self.bot.irc.send_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
 def load(bot, conf):
     max_topic_log_len = int(conf.get("max_topic_log_len", 3))
