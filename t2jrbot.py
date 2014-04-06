@@ -143,6 +143,11 @@ class Bot(object):
         self.__irc_callbacks_index_map = {}
         self.__irc_callbacks = []
 
+        self.add_irc_callback(self.__irc_error, irccmd="ERROR")
+
+    def __irc_error(self, prefix, this_irccmd, params):
+        sys.exit(1)
+
     @property
     def plugins(self):
         return dict(self.__plugins)
