@@ -34,21 +34,22 @@ def parse_admin_arg(admin):
 def admin_eval_command(bot, nick, host, channel, command, argstr):
     admin_plugin = bot.plugins["admin"]
 
-    if ((command not in admin_plugin.admin_commands)
+    if ((command in admin_plugin.command_whitelist)
         or
-        ((nick, host) not in admin_plugin.admins)):
-        bot.send_irc_privmsg(channel,
-                             "%s: only admins are allowed to %s" % (nick, command))
-        return
+        ((nick, host) in admin_plugin.admins)):
+        return admin_plugin._orig_eval_command(nick, host, channel, command, argstr)
 
-    return admin_plugin._orig_eval_command(nick, host, channel, command, argstr)
+    bot.send_irc_privmsg(channel,
+                         "%s: only admins are allowed to %s" % (nick, command))
+
+    return
 
 class AdminPlugin(object):
 
     def __init__(self, bot):
         self.bot = bot
         self.admins = set()
-        self.admin_commands = set()
+        self.command_whitelist = set()
 
         # We are going to replace the original eval_command() with our own
         # which first checks whether the given command is is restricted only
@@ -88,11 +89,11 @@ class AdminPlugin(object):
 
 def load(bot, conf):
     admins = [parse_admin_arg(a) for a in conf.get("admins", "").splitlines()]
-    admin_commands = conf.get("admin_commands", "").splitlines()
+    command_whitelist = conf.get("command_whitelist", "").splitlines()
 
     plugin = AdminPlugin(bot)
 
     plugin.admins.update(admins)
-    plugin.admin_commands.update(admin_commands)
+    plugin.command_whitelist.update(command_whitelist)
 
     return plugin
