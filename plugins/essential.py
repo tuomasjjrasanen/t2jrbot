@@ -34,7 +34,6 @@ class EssentialPlugin(object):
                                   "e.g. !quit So Long, and Thanks for All the Fish!")
 
         self.bot.add_irc_callback(self.irc_error, irccmd="ERROR")
-        self.bot.add_irc_callback(self.irc_001, irccmd="001")
         self.bot.add_irc_callback(self.irc_privmsg, irccmd="PRIVMSG")
 
     def command_help(self, nick, host, channel, this_command, argstr):
@@ -63,13 +62,6 @@ class EssentialPlugin(object):
 
     def irc_error(self, prefix, this_irccmd, params):
         sys.exit(1)
-
-    def irc_001(self, prefix, this_irccmd, params):
-        # Update the nick after successful connection because
-        # the server might have truncated or otherwise modified
-        # the nick we requested.
-        self.bot.nick = params[0]
-        self.bot.send_irc_join(self.bot.channel)
 
     def irc_privmsg(self, prefix, this_irccmd, params):
         nick, sep, host = prefix.partition("!")

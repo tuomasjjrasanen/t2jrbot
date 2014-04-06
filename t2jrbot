@@ -61,11 +61,10 @@ def main():
     server = bot_conf.get("server", "localhost")
     port = int(bot_conf.get("port", 6667))
     nick = bot_conf.get("nick", "t2jrbot")
-    channel = bot_conf.get("channel", "#t2jrbot")
     plugin_dirs = bot_conf.get("plugin_dirs", "").splitlines()
     plugins = bot_conf.get("plugins", "").splitlines()
 
-    bot = t2jrbot.Bot(server, port, nick, channel)
+    bot = t2jrbot.Bot(server, port, nick)
 
     for plugin_dir in plugin_dirs:
         bot.add_plugin_dir(plugin_dir)

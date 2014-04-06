@@ -132,12 +132,11 @@ class IRC(object):
 
 class Bot(object):
 
-    def __init__(self, server, port, nick, channel):
+    def __init__(self, server, port, nick):
         self.__server = server
         self.__port = port
         self.__irc = IRC()
         self.nick = nick
-        self.channel = channel
         self.__command_handlers = {}
         self.__command_descriptions = {}
         self.__quit_reason = ""
