@@ -33,7 +33,6 @@ class EssentialPlugin(object):
                                   "Usage: !quit [MESSAGE], "
                                   "e.g. !quit So Long, and Thanks for All the Fish!")
 
-        self.bot.add_irc_callback(self.irc_ping, irccmd="PING")
         self.bot.add_irc_callback(self.irc_error, irccmd="ERROR")
         self.bot.add_irc_callback(self.irc_001, irccmd="001")
         self.bot.add_irc_callback(self.irc_privmsg, irccmd="PRIVMSG")
@@ -61,9 +60,6 @@ class EssentialPlugin(object):
 
     def command_quit(self, nick, host, channel, this_command, argstr):
         self.bot.quit(argstr)
-
-    def irc_ping(self, prefix, this_irccmd, params):
-        self.bot.send_irc_pong(self.bot.nick)
 
     def irc_error(self, prefix, this_irccmd, params):
         sys.exit(1)
