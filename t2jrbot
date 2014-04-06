@@ -27,69 +27,6 @@ import hashlib
 
 import t2jrbot
 
-def command_help(bot, nick, host, channel, this_command, argstr):
-    command = argstr.strip()
-    if not command:
-        commands = sorted(bot.command_descriptions.keys())
-        bot.send_irc_privmsg(channel,
-                             "%s: Commands: %s"
-                             % (nick, ", ".join(commands)))
-        bot.send_irc_privmsg(channel,
-                             "%s: To get detailed help on a command, "
-                             "use %s COMMAND, e.g. %s %s"
-                             % (nick, this_command, this_command, this_command))
-    else:
-        try:
-            descr = bot.command_descriptions[command]
-        except KeyError:
-            bot.send_irc_privmsg(channel,
-                                 "%s: command '%s' not found" % (nick, command))
-        else:
-            bot.send_irc_privmsg(channel, "%s: %s - %s"
-                                 % (nick, command, descr))
-
-def command_quit(bot, nick, host, channel, this_command, argstr):
-    bot.quit(argstr)
-
-def irc_ping(bot, prefix, this_irccmd, params):
-    bot.send_irc_pong(bot.nick)
-
-def irc_error(bot, prefix, this_irccmd, params):
-    sys.exit(1)
-
-def irc_001(bot, prefix, this_irccmd, params):
-    # Update the nick after successful connection because
-    # the server might have truncated or otherwise modified
-    # the nick we requested.
-    bot.nick = params[0]
-    bot.send_irc_join(bot.channel)
-
-def irc_privmsg(bot, prefix, this_irccmd, params):
-    nick, sep, host = prefix.partition("!")
-
-    target, text = params
-
-    if target == bot.nick:
-        # User-private messages are not supported and are silently
-        # ignored.
-        return
-
-    channel = target
-
-    # Ignore all leading whitespaces.
-    text = text.lstrip()
-
-    if not text.startswith("%s:" % bot.nick):
-        # The message is not designated to me, ignore.
-        return
-
-    # Strip my nick from the beginning of the text.
-    commandstr = text[len("%s:" % bot.nick):].lstrip()
-
-    command, _, argstr = commandstr.partition(' ')
-
-    bot.eval_command(nick, host, channel, command, argstr)
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Simple but elegant IRC bot")
     parser.add_argument("config_file", metavar="CONFIG_FILE",
@@ -129,20 +66,6 @@ def main():
     plugins = bot_conf.get("plugins", "").splitlines()
 
     bot = t2jrbot.Bot(server, port, nick, channel)
-
-    # Built-in bot commands.
-    bot.register_command("!help", command_help,
-                         "Since you got this far, "
-                         "you already know what this command does.")
-    bot.register_command("!quit", command_quit, "Quits the bot, "
-                         "optionally with a message. "
-                         "Usage: !quit [MESSAGE], "
-                         "e.g. !quit So Long, and Thanks for All the Fish!")
-
-    bot.add_irc_callback(irc_ping, irccmd="PING")
-    bot.add_irc_callback(irc_error, irccmd="ERROR")
-    bot.add_irc_callback(irc_001, irccmd="001")
-    bot.add_irc_callback(irc_privmsg, irccmd="PRIVMSG")
 
     for plugin_dir in plugin_dirs:
         bot.add_plugin_dir(plugin_dir)
