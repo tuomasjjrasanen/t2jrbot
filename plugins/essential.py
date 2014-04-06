@@ -25,40 +25,8 @@ class EssentialPlugin(object):
     def __init__(self, bot):
         self.bot = bot
 
-        self.bot.register_command("!help", self.command_help,
-                                  "Since you got this far, "
-                                  "you already know what this command does.")
-        self.bot.register_command("!quit", self.command_quit, "Quits the bot, "
-                                  "optionally with a message. "
-                                  "Usage: !quit [MESSAGE], "
-                                  "e.g. !quit So Long, and Thanks for All the Fish!")
-
         self.bot.add_irc_callback(self.irc_error, irccmd="ERROR")
         self.bot.add_irc_callback(self.irc_privmsg, irccmd="PRIVMSG")
-
-    def command_help(self, nick, host, channel, this_command, argstr):
-        command = argstr.strip()
-        if not command:
-            commands = sorted(self.bot.command_descriptions.keys())
-            self.bot.send_irc_privmsg(channel,
-                                      "%s: Commands: %s"
-                                      % (nick, ", ".join(commands)))
-            self.bot.send_irc_privmsg(channel,
-                                      "%s: To get detailed help on a command, "
-                                      "use %s COMMAND, e.g. %s %s"
-                                      % (nick, this_command, this_command, this_command))
-        else:
-            try:
-                descr = self.bot.command_descriptions[command]
-            except KeyError:
-                self.bot.send_irc_privmsg(channel,
-                                          "%s: command '%s' not found" % (nick, command))
-            else:
-                self.bot.send_irc_privmsg(channel, "%s: %s - %s"
-                                          % (nick, command, descr))
-
-    def command_quit(self, nick, host, channel, this_command, argstr):
-        self.bot.quit(argstr)
 
     def irc_error(self, prefix, this_irccmd, params):
         sys.exit(1)

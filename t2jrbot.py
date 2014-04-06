@@ -139,7 +139,6 @@ class Bot(object):
         self.nick = nick
         self.__command_handlers = {}
         self.__command_descriptions = {}
-        self.__quit_reason = ""
         self.__is_stopping = False
         self.__plugins = {}
         self.__plugin_dirs = set()
@@ -159,9 +158,7 @@ class Bot(object):
     def command_descriptions(self):
         return dict(self.__command_descriptions)
 
-    def quit(self, reason=""):
-        # The actual quit is postponed until the main loop has finished.
-        self.__quit_reason = reason
+    def stop(self):
         self.__is_stopping = True
 
     def add_irc_callback(self, callback, prefix=None, irccmd=None):
@@ -220,8 +217,6 @@ class Bot(object):
                     for callback_index in sorted(callback_indices):
                         callback = self.__irc_callbacks[callback_index]
                         callback(prefix, irccmd, params)
-
-            self.__irc.send_quit(self.__quit_reason)
         finally:
             self.__irc.shutdown()
 
