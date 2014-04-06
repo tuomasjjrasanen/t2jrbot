@@ -141,7 +141,6 @@ class Bot(object):
         self.__command_descriptions = {}
         self.__is_stopping = False
         self.__plugins = {}
-        self.__plugin_dirs = set()
 
         self.__irc_callbacks_index_map = {}
         self.__irc_callbacks = []
@@ -216,16 +215,13 @@ class Bot(object):
         finally:
             self.irc.shutdown()
 
-    def add_plugin_dir(self, plugin_dir):
-        self.__plugin_dirs.add(plugin_dir)
-
-    def load_plugin(self, plugin_name, conf):
+    def load_plugin(self, plugin_name, conf, plugin_dirs=()):
         if plugin_name in self.__plugins:
             return False
 
         orig_sys_path = list(sys.path)
         try:
-            sys.path.extend(self.__plugin_dirs)
+            sys.path.extend(plugin_dirs)
             plugin_module = importlib.import_module(plugin_name)
             del sys.modules[plugin_name]
 

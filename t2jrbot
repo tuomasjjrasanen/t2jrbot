@@ -66,11 +66,9 @@ def main():
 
     bot = t2jrbot.Bot(server, port, nick)
 
-    for plugin_dir in plugin_dirs:
-        bot.add_plugin_dir(plugin_dir)
-
     for plugin_name in plugins:
-        bot.load_plugin(plugin_name, plugins_conf.get(plugin_name, {}))
+        bot.load_plugin(plugin_name, plugins_conf.get(plugin_name, {}),
+                        plugin_dirs)
 
     bot.run()
 
