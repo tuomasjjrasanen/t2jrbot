@@ -22,15 +22,6 @@ from __future__ import print_function
 
 import types
 
-def parse_admin_arg(admin):
-    admin_nick, sep, admin_host = admin.partition("!")
-    admin_nick = admin_nick.strip()
-    admin_host = admin_host.strip()
-    if not admin_nick or not sep or not admin_host:
-        raise argparse.ArgumentTypeError("malformed admin identifier, should "
-                                         "be of form 'nick!user@example.org'")
-    return admin_nick, admin_host
-
 def admin_eval_command(bot, nick, host, channel, command, argstr):
     admin_plugin = bot.plugins["admin"]
 
@@ -46,10 +37,11 @@ def admin_eval_command(bot, nick, host, channel, command, argstr):
 
 class AdminPlugin(object):
 
-    def __init__(self, bot):
+    def __init__(self, bot, admins, command_whitelist):
         self.bot = bot
-        self.admins = set()
-        self.command_whitelist = set()
+
+        self.admins = set([self.parse_admin_arg(a) for a in admins])
+        self.command_whitelist = set(command_whitelist)
 
         # We are going to replace the original eval_command() with our own
         # which first checks whether the given command is is restricted only
@@ -80,20 +72,24 @@ class AdminPlugin(object):
         self.bot.send_irc_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
 
     def command_admin_add(self, nick, host, channel, this_command, argstr):
-        admin_nick, admin_host = parse_admin_arg(argstr)
+        admin_nick, admin_host = self.parse_admin_arg(argstr)
         self.admins.add((admin_nick, admin_host))
 
     def command_admin_remove(self, nick, host, channel, this_command, argstr):
-        admin_nick, admin_host = parse_admin_arg(argstr)
+        admin_nick, admin_host = self.parse_admin_arg(argstr)
         self.admins.discard((admin_nick, admin_host))
 
+    def parse_admin_arg(self, admin):
+        admin_nick, sep, admin_host = admin.partition("!")
+        admin_nick = admin_nick.strip()
+        admin_host = admin_host.strip()
+        if not admin_nick or not sep or not admin_host:
+            raise ValueError("malformed admin identifier, should "
+                             "be of form 'nick!user@example.org'")
+        return admin_nick, admin_host
+
 def load(bot, conf):
-    admins = [parse_admin_arg(a) for a in conf.get("admins", "").splitlines()]
+    admins = conf.get("admins", "").splitlines()
     command_whitelist = conf.get("command_whitelist", "").splitlines()
 
-    plugin = AdminPlugin(bot)
-
-    plugin.admins.update(admins)
-    plugin.command_whitelist.update(command_whitelist)
-
-    return plugin
+    return AdminPlugin(bot, admins, command_whitelist)
