@@ -26,36 +26,9 @@ class EssentialPlugin(object):
         self.bot = bot
 
         self.bot.add_irc_callback(self.irc_error, irccmd="ERROR")
-        self.bot.add_irc_callback(self.irc_privmsg, irccmd="PRIVMSG")
 
     def irc_error(self, prefix, this_irccmd, params):
         sys.exit(1)
-
-    def irc_privmsg(self, prefix, this_irccmd, params):
-        nick, sep, host = prefix.partition("!")
-
-        target, text = params
-
-        if target == self.bot.nick:
-            # User-private messages are not supported and are silently
-            # ignored.
-            return
-
-        channel = target
-
-        # Ignore all leading whitespaces.
-        text = text.lstrip()
-
-        if not text.startswith("%s:" % self.bot.nick):
-            # The message is not designated to me, ignore.
-            return
-
-        # Strip my nick from the beginning of the text.
-        commandstr = text[len("%s:" % self.bot.nick):].lstrip()
-
-        command, _, argstr = commandstr.partition(' ')
-
-        self.bot.eval_command(nick, host, channel, command, argstr)
 
 def load(bot, conf):
     return EssentialPlugin(bot)

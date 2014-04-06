@@ -25,10 +25,10 @@ class QuitPlugin(object):
     def __init__(self, bot):
         self.bot = bot
 
-        self.bot.register_command("!quit", self.command_quit, "Quits the bot, "
-                                  "optionally with a message. "
-                                  "Usage: !quit [MESSAGE], "
-                                  "e.g. !quit So Long, and Thanks for All the Fish!")
+        self.bot.plugins["command"].register_command("!quit", self.command_quit, "Quits the bot, "
+                                                     "optionally with a message. "
+                                                     "Usage: !quit [MESSAGE], "
+                                                     "e.g. !quit So Long, and Thanks for All the Fish!")
 
     def command_quit(self, nick, host, channel, this_command, argstr):
         self.bot.stop()

@@ -48,24 +48,24 @@ class AdminPlugin(object):
         # to admins and if so is it given by an admin. We store the original
         # method so that we can use it for actually evaluating the command
         # once it has passed our checks.
-        self._orig_eval_command = self.bot.eval_command
-        self.bot.eval_command = types.MethodType(admin_eval_command, bot)
+        self._orig_eval_command = self.bot.plugins["command"].eval_command
+        self.bot.plugins["command"].eval_command = types.MethodType(admin_eval_command, bot)
 
-        self.bot.register_command("!admin_list",
-                                  self.command_admin_list,
-                                  "List bot admins. Usage: !admin_list")
+        self.bot.plugins["command"].register_command("!admin_list",
+                                                     self.command_admin_list,
+                                                     "List bot admins. Usage: !admin_list")
 
-        self.bot.register_command("!admin_add",
-                                  self.command_admin_add,
-                                  "Add a bot admin. "
-                                  "Usage: !admin_add NICK!USER@HOST, "
-                                  "e.g. !admin_add fanatic!fan.atic@example.org")
+        self.bot.plugins["command"].register_command("!admin_add",
+                                                     self.command_admin_add,
+                                                     "Add a bot admin. "
+                                                     "Usage: !admin_add NICK!USER@HOST, "
+                                                     "e.g. !admin_add fanatic!fan.atic@example.org")
 
-        self.bot.register_command("!admin_remove",
-                                  self.command_admin_remove,
-                                  "Remove a bot admin. "
-                                  "Usage: !admin_remove NICK!USER@HOST, "
-                                  "e.g. !admin_remove fanatic!fan.atic@example.org")
+        self.bot.plugins["command"].register_command("!admin_remove",
+                                                     self.command_admin_remove,
+                                                     "Remove a bot admin. "
+                                                     "Usage: !admin_remove NICK!USER@HOST, "
+                                                     "e.g. !admin_remove fanatic!fan.atic@example.org")
 
     def command_admin_list(self, nick, host, channel, this_command, argstr):
         admins = ["%s!%s" % (nick, host) for nick, host in self.admins]

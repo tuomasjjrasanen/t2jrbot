@@ -137,8 +137,6 @@ class Bot(object):
         self.__port = port
         self.irc = IRC()
         self.nick = nick
-        self.__command_handlers = {}
-        self.__command_descriptions = {}
         self.__is_stopping = False
         self.__plugins = {}
 
@@ -148,10 +146,6 @@ class Bot(object):
     @property
     def plugins(self):
         return dict(self.__plugins)
-
-    @property
-    def command_descriptions(self):
-        return dict(self.__command_descriptions)
 
     def stop(self):
         self.__is_stopping = True
@@ -172,19 +166,6 @@ class Bot(object):
         key = (prefix, irccmd)
         indices = self.__irc_callbacks_index_map.setdefault(key, [])
         indices.append(i)
-
-    def register_command(self, command, handler, description=""):
-        if command in self.__command_handlers:
-            raise Error("command '%s' is already registered" % command)
-        self.__command_handlers[command] = handler
-        self.__command_descriptions[command] = description
-
-    def unregister_command(self, command):
-        try:
-            del self.__command_handlers[command]
-        except KeyError:
-            raise Error("command '%s' is not registered" % command)
-        del self.__command_descriptions[command]
 
     def run(self):
         self.irc.connect(self.__server, self.__port)
@@ -232,16 +213,3 @@ class Bot(object):
             sys.path = orig_sys_path
 
         return True
-
-    def eval_command(self, nick, host, channel, command, argstr):
-        try:
-            command_handler = self.__command_handlers[command]
-        except KeyError:
-            # Silently ignore all input except registered commands.
-            return
-
-        try:
-            command_handler(nick, host, channel, command, argstr)
-        except Exception, e:
-            self.irc.send_privmsg(channel,
-                                  "%s: error: %s" % (nick, e.message))
