@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Topic logger plugin for t2jrbot.
+# Autojoin plugin for t2jrbot.
 # Copyright © 2014 Tuomas Räsänen <tuomasjjrasanen@tjjr.fi>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,21 +20,21 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-class AutojoinPlugin(object):
+class _AutojoinPlugin(object):
 
     def __init__(self, bot, channel):
-        self.bot = bot
-        self.channel = channel
+        self.__bot = bot
+        self.__channel = channel
 
-        self.bot.add_irc_callback(self.irc_001, irccmd="001")
+        self.__bot.add_irc_callback(self.__irc_001, irccmd="001")
 
-    def irc_001(self, prefix, this_irccmd, params):
+    def __irc_001(self, prefix, this_irccmd, params):
         # Update the nick after successful connection because
         # the server might have truncated or otherwise modified
         # the nick we requested.
-        self.bot.nick = params[0]
-        self.bot.irc.send_join(self.channel)
+        self.__bot.nick = params[0]
+        self.__bot.irc.send_join(self.__channel)
 
 def load(bot, conf):
     channel = conf.get("channel", "#t2jrbot")
-    return AutojoinPlugin(bot, channel)
+    return _AutojoinPlugin(bot, channel)

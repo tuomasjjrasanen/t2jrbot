@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Topic logger plugin for t2jrbot.
+# Admin plugin for t2jrbot.
 # Copyright © 2014 Tuomas Räsänen <tuomasjjrasanen@tjjr.fi>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,56 +20,56 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-class AdminPlugin(object):
+class _AdminPlugin(object):
 
     def __init__(self, bot, admins, command_whitelist):
-        self.bot = bot
+        self.__bot = bot
 
-        self.admins = set([self.parse_admin_arg(a) for a in admins])
-        self.command_whitelist = set(command_whitelist)
+        self.__admins = set([self.__parse_admin_arg(a) for a in admins])
+        self.__command_whitelist = set(command_whitelist)
 
-        self.bot.plugins["command"].add_pre_eval_hook(self.__check_auth)
+        self.__bot.plugins["command"].add_pre_eval_hook(self.__check_auth)
 
-        self.bot.plugins["command"].register_command("!admin_list",
-                                                     self.command_admin_list,
-                                                     "List bot admins. Usage: !admin_list")
+        self.__bot.plugins["command"].register_command("!admin_list",
+                                                       self.__command_admin_list,
+                                                       "List bot admins. Usage: !admin_list")
 
-        self.bot.plugins["command"].register_command("!admin_add",
-                                                     self.command_admin_add,
-                                                     "Add a bot admin. "
-                                                     "Usage: !admin_add NICK!USER@HOST, "
-                                                     "e.g. !admin_add fanatic!fan.atic@example.org")
+        self.__bot.plugins["command"].register_command("!admin_add",
+                                                       self.__command_admin_add,
+                                                       "Add a bot admin. "
+                                                       "Usage: !admin_add NICK!USER@HOST, "
+                                                       "e.g. !admin_add fanatic!fan.atic@example.org")
 
-        self.bot.plugins["command"].register_command("!admin_remove",
-                                                     self.command_admin_remove,
-                                                     "Remove a bot admin. "
-                                                     "Usage: !admin_remove NICK!USER@HOST, "
-                                                     "e.g. !admin_remove fanatic!fan.atic@example.org")
+        self.__bot.plugins["command"].register_command("!admin_remove",
+                                                       self.__command_admin_remove,
+                                                       "Remove a bot admin. "
+                                                       "Usage: !admin_remove NICK!USER@HOST, "
+                                                       "e.g. !admin_remove fanatic!fan.atic@example.org")
 
     def __check_auth(self, nick, host, channel, command, argstr):
-        if ((command in self.command_whitelist)
+        if ((command in self.__command_whitelist)
             or
-            ((nick, host) in self.admins)):
+            ((nick, host) in self.__admins)):
             return True
 
-        self.bot.irc.send_privmsg(channel,
-                                  "%s: only admins are allowed to %s" % (nick, command))
+        self.__bot.irc.send_privmsg(channel,
+                                    "%s: only admins are allowed to %s" % (nick, command))
 
         return False
 
-    def command_admin_list(self, nick, host, channel, this_command, argstr):
-        admins = ["%s!%s" % (nick, host) for nick, host in self.admins]
-        self.bot.irc.send_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
+    def __command_admin_list(self, nick, host, channel, this_command, argstr):
+        admins = ["%s!%s" % (nick, host) for nick, host in self.__admins]
+        self.__bot.irc.send_privmsg(channel, "%s: %s" % (nick, " ".join(admins)))
 
-    def command_admin_add(self, nick, host, channel, this_command, argstr):
-        admin_nick, admin_host = self.parse_admin_arg(argstr)
-        self.admins.add((admin_nick, admin_host))
+    def __command_admin_add(self, nick, host, channel, this_command, argstr):
+        admin_nick, admin_host = self.__parse_admin_arg(argstr)
+        self.__admins.add((admin_nick, admin_host))
 
-    def command_admin_remove(self, nick, host, channel, this_command, argstr):
-        admin_nick, admin_host = self.parse_admin_arg(argstr)
-        self.admins.discard((admin_nick, admin_host))
+    def __command_admin_remove(self, nick, host, channel, this_command, argstr):
+        admin_nick, admin_host = self.__parse_admin_arg(argstr)
+        self.__admins.discard((admin_nick, admin_host))
 
-    def parse_admin_arg(self, admin):
+    def __parse_admin_arg(self, admin):
         admin_nick, sep, admin_host = admin.partition("!")
         admin_nick = admin_nick.strip()
         admin_host = admin_host.strip()
@@ -82,4 +82,4 @@ def load(bot, conf):
     admins = conf.get("admins", "").splitlines()
     command_whitelist = conf.get("command_whitelist", "").splitlines()
 
-    return AdminPlugin(bot, admins, command_whitelist)
+    return _AdminPlugin(bot, admins, command_whitelist)

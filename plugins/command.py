@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Topic logger plugin for t2jrbot.
+# Command plugin for t2jrbot.
 # Copyright © 2014 Tuomas Räsänen <tuomasjjrasanen@tjjr.fi>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,44 +20,40 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-class CommandPlugin(object):
+class _CommandPlugin(object):
 
     def __init__(self, bot):
-        self.bot = bot
+        self.__bot = bot
         self.__command_handlers = {}
         self.__command_descriptions = {}
 
         self.__pre_eval_hooks = {}
 
-        self.bot.add_irc_callback(self.irc_privmsg, irccmd="PRIVMSG")
-        self.register_command("!help", self.command_help,
+        self.__bot.add_irc_callback(self.__irc_privmsg, irccmd="PRIVMSG")
+        self.register_command("!help", self.__command_help,
                               "Since you got this far, "
                               "you already know what this command does.")
 
-    def command_help(self, nick, host, channel, this_command, argstr):
+    def __command_help(self, nick, host, channel, this_command, argstr):
         command = argstr.strip()
         if not command:
-            commands = sorted(self.command_descriptions.keys())
-            self.bot.irc.send_privmsg(channel,
-                                      "%s: Commands: %s"
-                                      % (nick, ", ".join(commands)))
-            self.bot.irc.send_privmsg(channel,
-                                      "%s: To get detailed help on a command, "
-                                      "use %s COMMAND, e.g. %s %s"
-                                      % (nick, this_command, this_command, this_command))
+            commands = sorted(self.__command_descriptions.keys())
+            self.__bot.irc.send_privmsg(channel,
+                                        "%s: Commands: %s"
+                                        % (nick, ", ".join(commands)))
+            self.__bot.irc.send_privmsg(channel,
+                                        "%s: To get detailed help on a command, "
+                                        "use %s COMMAND, e.g. %s %s"
+                                        % (nick, this_command, this_command, this_command))
         else:
             try:
-                descr = self.command_descriptions[command]
+                descr = self.__command_descriptions[command]
             except KeyError:
-                self.bot.irc.send_privmsg(channel,
-                                          "%s: command '%s' not found" % (nick, command))
+                self.__bot.irc.send_privmsg(channel,
+                                            "%s: command '%s' not found" % (nick, command))
             else:
-                self.bot.irc.send_privmsg(channel, "%s: %s - %s"
-                                          % (nick, command, descr))
-
-    @property
-    def command_descriptions(self):
-        return dict(self.__command_descriptions)
+                self.__bot.irc.send_privmsg(channel, "%s: %s - %s"
+                                            % (nick, command, descr))
 
     def add_pre_eval_hook(self, hook, command=None):
         hooks = self.__pre_eval_hooks.setdefault(command, set())
@@ -76,12 +72,12 @@ class CommandPlugin(object):
             raise Error("command '%s' is not registered" % command)
         del self.__command_descriptions[command]
 
-    def irc_privmsg(self, prefix, this_irccmd, params):
+    def __irc_privmsg(self, prefix, this_irccmd, params):
         nick, sep, host = prefix.partition("!")
 
         target, text = params
 
-        if target == self.bot.nick:
+        if target == self.__bot.nick:
             # User-private messages are not supported and are silently
             # ignored.
             return
@@ -91,12 +87,12 @@ class CommandPlugin(object):
         # Ignore all leading whitespaces.
         text = text.lstrip()
 
-        if not text.startswith("%s:" % self.bot.nick):
+        if not text.startswith("%s:" % self.__bot.nick):
             # The message is not designated to me, ignore.
             return
 
         # Strip my nick from the beginning of the text.
-        commandstr = text[len("%s:" % self.bot.nick):].lstrip()
+        commandstr = text[len("%s:" % self.__bot.nick):].lstrip()
 
         command, _, argstr = commandstr.partition(' ')
 
@@ -125,4 +121,4 @@ class CommandPlugin(object):
 
 
 def load(bot, conf):
-    return CommandPlugin(bot)
+    return _CommandPlugin(bot)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Topic logger plugin for t2jrbot.
+# Pong plugin for t2jrbot.
 # Copyright © 2014 Tuomas Räsänen <tuomasjjrasanen@tjjr.fi>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,15 +20,15 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-class PongPlugin(object):
+class _PongPlugin(object):
 
     def __init__(self, bot):
-        self.bot = bot
+        self.__bot = bot
 
-        self.bot.add_irc_callback(self.irc_ping, irccmd="PING")
+        self.__bot.add_irc_callback(self.__irc_ping, irccmd="PING")
 
-    def irc_ping(self, prefix, this_irccmd, params):
-        self.bot.irc.send_pong(self.bot.nick)
+    def __irc_ping(self, prefix, this_irccmd, params):
+        self.__bot.irc.send_pong(self.__bot.nick)
 
 def load(bot, conf):
-    return PongPlugin(bot)
+    return _PongPlugin(bot)

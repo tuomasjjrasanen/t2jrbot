@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Quit command plugin for t2jrbot.
+# Quit plugin for t2jrbot.
 # Copyright © 2014 Tuomas Räsänen <tuomasjjrasanen@tjjr.fi>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,19 +20,19 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-class QuitPlugin(object):
+class _QuitPlugin(object):
 
     def __init__(self, bot):
-        self.bot = bot
+        self.__bot = bot
 
-        self.bot.plugins["command"].register_command("!quit", self.command_quit, "Quits the bot, "
-                                                     "optionally with a message. "
-                                                     "Usage: !quit [MESSAGE], "
-                                                     "e.g. !quit So Long, and Thanks for All the Fish!")
+        self.__bot.plugins["command"].register_command("!quit", self.__command_quit, "Quits the bot, "
+                                                       "optionally with a message. "
+                                                       "Usage: !quit [MESSAGE], "
+                                                       "e.g. !quit So Long, and Thanks for All the Fish!")
 
-    def command_quit(self, nick, host, channel, this_command, argstr):
-        self.bot.stop()
-        self.bot.irc.send_quit(argstr)
+    def __command_quit(self, nick, host, channel, this_command, argstr):
+        self.__bot.stop()
+        self.__bot.irc.send_quit(argstr)
 
 def load(bot, conf):
-    return QuitPlugin(bot)
+    return _QuitPlugin(bot)
