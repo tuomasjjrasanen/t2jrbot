@@ -15,7 +15,7 @@ setup(name='t2jrbot',
       license='GPLv3+',
       package_dir={'t2jrbot': 'lib'},
       packages=['t2jrbot', 't2jrbot.plugins'],
-      scripts=["t2jrbot"],
+      scripts=["bin/t2jrbot"],
       platforms=['Linux'],
       classifiers=[
           "Development Status :: 3 - Alpha",
