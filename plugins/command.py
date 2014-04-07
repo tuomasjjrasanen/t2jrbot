@@ -116,8 +116,8 @@ class _CommandPlugin(object):
         try:
             command_handler(nick, host, channel, command, argstr)
         except Exception, e:
-            self.irc.send_privmsg(channel,
-                                  "%s: error: %s" % (nick, e.message))
+            self.__bot.irc.send_privmsg(channel,
+                                        "%s: error: %s" % (nick, e.message))
 
 
 def load(bot, conf):
