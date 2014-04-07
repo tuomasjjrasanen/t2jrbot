@@ -34,29 +34,23 @@ def parse_args():
     return parser.parse_args()
 
 def parse_conf(filepath):
-    bot_conf = {}
-    plugins_conf = {}
+    conf = {}
 
     config_parser = ConfigParser.RawConfigParser()
     config_parser.read(filepath)
 
     for section in config_parser.sections():
-        if section == "bot":
-            bot_conf.update(dict(config_parser.items(section)))
-            continue
+        section_conf = conf.setdefault(section, {})
+        section_conf.update(dict(config_parser.items(section)))
 
-        if section.startswith("plugins."):
-            plugin_name = section.lstrip("plugins.")
-            plugin_conf = plugins_conf.setdefault(plugin_name, {})
-            plugin_conf.update(dict(config_parser.items(section)))
-            continue
-
-    return bot_conf, plugins_conf
+    return conf
 
 def main():
     options = parse_args()
 
-    bot_conf, plugins_conf = parse_conf(options.config_file)
+    conf = parse_conf(options.config_file)
+
+    bot_conf = conf.get("bot", {})
 
     server = bot_conf.get("server", "localhost")
     port = int(bot_conf.get("port", 6667))
@@ -67,7 +61,7 @@ def main():
     bot = t2jrbot.core.Bot(server, port, nick)
 
     for plugin_name in plugins:
-        bot.load_plugin(plugin_name, plugins_conf.get(plugin_name, {}),
+        bot.load_plugin(plugin_name, conf.get(plugin_name, {}),
                         plugin_dirs)
 
     bot.run()
