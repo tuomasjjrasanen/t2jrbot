@@ -209,7 +209,6 @@ class Bot(object):
         try:
             sys.path.extend(plugin_dirs)
             plugin_module = importlib.import_module(plugin_name)
-            del sys.modules[plugin_name]
 
             plugin = plugin_module.load(self, conf)
 
