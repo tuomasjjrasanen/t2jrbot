@@ -29,7 +29,7 @@ class _CommandPlugin(object):
 
         self.__pre_eval_hooks = {}
 
-        self.__bot.add_irc_callback(self.__irc_privmsg, irccmd="PRIVMSG")
+        self.__bot.add_irc_callback(self.__irc_privmsg, command="PRIVMSG")
         self.register_command("!help", self.__command_help,
                               "Since you got this far, "
                               "you already know what this command does.")
@@ -72,7 +72,7 @@ class _CommandPlugin(object):
             raise Error("command '%s' is not registered" % command)
         del self.__command_descriptions[command]
 
-    def __irc_privmsg(self, prefix, this_irccmd, params):
+    def __irc_privmsg(self, prefix, this_command, params):
         nick, sep, host = prefix.partition("!")
 
         target, text = params

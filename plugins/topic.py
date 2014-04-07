@@ -27,7 +27,7 @@ class _TopicPlugin(object):
         self.__topic_logs = {} # Maps channels to lists of topics.
         self.__max_topic_log_len = max_topic_log_len
 
-        self.__bot.add_irc_callback(self.__irc_topic_callback, irccmd="TOPIC")
+        self.__bot.add_irc_callback(self.__irc_topic_callback, command="TOPIC")
 
         self.__bot.plugins["command"].register_command("!topic_log", self.__command_topic_log,
                                                        "Show the topic log. Usage: !topic_log")

@@ -143,9 +143,9 @@ class Bot(object):
         self.__irc_callbacks_index_map = {}
         self.__irc_callbacks = []
 
-        self.add_irc_callback(self.__irc_error, irccmd="ERROR")
+        self.add_irc_callback(self.__irc_error, command="ERROR")
 
-    def __irc_error(self, prefix, this_irccmd, params):
+    def __irc_error(self, prefix, this_command, params):
         sys.exit(1)
 
     @property
@@ -155,12 +155,12 @@ class Bot(object):
     def stop(self):
         self.__is_stopping = True
 
-    def add_irc_callback(self, callback, prefix=None, irccmd=None):
+    def add_irc_callback(self, callback, prefix=None, command=None):
         """Add a callable to the list of IRC RX callbacks.
 
         The callback `callback` will be called whenever an IRC message
-        matching given `prefix` and `irccmd` has been received. If
-        `prefix` and/or `irccmd` is None, they are treated as wildcards
+        matching given `prefix` and `command` has been received. If
+        `prefix` and/or `command` is None, they are treated as wildcards
         matching any value.
 
         Callbacks are called in the order they added to the list.
@@ -168,7 +168,7 @@ class Bot(object):
         """
         i = len(self.__irc_callbacks)
         self.__irc_callbacks.append(callback)
-        key = (prefix, irccmd)
+        key = (prefix, command)
         indices = self.__irc_callbacks_index_map.setdefault(key, [])
         indices.append(i)
 
@@ -186,18 +186,18 @@ class Bot(object):
                 # Read socket buffer, parse messages and handle them.
                 messages = self.irc.recv()
 
-                for prefix, irccmd, params in messages:
+                for prefix, command, params in messages:
                     callback_indices = set()
 
                     callback_indices.update(
                         self.__irc_callbacks_index_map.get((None, None), set()),
                         self.__irc_callbacks_index_map.get((prefix, None), set()),
-                        self.__irc_callbacks_index_map.get((None, irccmd), set()),
-                        self.__irc_callbacks_index_map.get((prefix, irccmd), set()))
+                        self.__irc_callbacks_index_map.get((None, command), set()),
+                        self.__irc_callbacks_index_map.get((prefix, command), set()))
 
                     for callback_index in sorted(callback_indices):
                         callback = self.__irc_callbacks[callback_index]
-                        callback(prefix, irccmd, params)
+                        callback(prefix, command, params)
         finally:
             self.irc.shutdown()
 
