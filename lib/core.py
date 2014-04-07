@@ -201,19 +201,12 @@ class Bot(object):
         finally:
             self.irc.shutdown()
 
-    def load_plugin(self, plugin_name, conf, plugin_dirs=()):
+    def load_plugin(self, plugin_name, conf):
         if plugin_name in self.__plugins:
             return False
 
-        orig_sys_path = list(sys.path)
-        try:
-            sys.path.extend(plugin_dirs)
-            plugin_module = importlib.import_module(plugin_name)
-
-            plugin = plugin_module.load(self, conf)
-
-            self.__plugins[plugin_name] = plugin
-        finally:
-            sys.path = orig_sys_path
+        plugin_module = importlib.import_module(plugin_name)
+        plugin = plugin_module.load(self, conf)
+        self.__plugins[plugin_name] = plugin
 
         return True
