@@ -25,7 +25,7 @@ import argparse
 import ConfigParser
 import hashlib
 
-import t2jrbot
+import t2jrbot.core
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Simple but elegant IRC bot")
@@ -64,7 +64,7 @@ def main():
     plugin_dirs = bot_conf.get("plugin_dirs", "").splitlines()
     plugins = bot_conf.get("plugins", "").splitlines()
 
-    bot = t2jrbot.Bot(server, port, nick)
+    bot = t2jrbot.core.Bot(server, port, nick)
 
     for plugin_name in plugins:
         bot.load_plugin(plugin_name, plugins_conf.get(plugin_name, {}),
