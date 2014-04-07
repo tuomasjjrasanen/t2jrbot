@@ -25,10 +25,11 @@ class _QuitPlugin(object):
     def __init__(self, bot):
         self.__bot = bot
 
-        self.__bot.plugins["command"].register_command("!quit", self.__command_quit, "Quits the bot, "
-                                                       "optionally with a message. "
-                                                       "Usage: !quit [MESSAGE], "
-                                                       "e.g. !quit So Long, and Thanks for All the Fish!")
+        command_plugin = self.__bot.plugins["t2jrbot.plugins.command"]
+        command_plugin.register_command("!quit", self.__command_quit, "Quits the bot, "
+                                        "optionally with a message. "
+                                        "Usage: !quit [MESSAGE], "
+                                        "e.g. !quit So Long, and Thanks for All the Fish!")
 
     def __command_quit(self, nick, host, channel, this_command, argstr):
         self.__bot.stop()

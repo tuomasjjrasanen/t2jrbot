@@ -30,12 +30,13 @@ class _RconPlugin(object):
         self.__port = port
         self.__password = password
 
-        self.__bot.plugins["command"].register_command("!rcon_status", self.__command_rcon_status,
-                                                       "Show game status. Usage: !rcon_status")
+        command_plugin = self.__bot.plugins["t2jrbot.plugins.command"]
+        command_plugin.register_command("!rcon_status", self.__command_rcon_status,
+                                        "Show game status. Usage: !rcon_status")
 
-        self.__bot.plugins["command"].register_command("!rcon_say", self.__command_rcon_say,
-                                                       "Say something in the game. "
-                                                       "Usage: !rcon_say Pizzas are here!")
+        command_plugin.register_command("!rcon_say", self.__command_rcon_say,
+                                        "Say something in the game. "
+                                        "Usage: !rcon_say Pizzas are here!")
 
     def __crcon(self, rcon_cmd):
         args = ["crcon"]

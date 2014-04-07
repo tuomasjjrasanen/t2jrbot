@@ -13,7 +13,8 @@ setup(name='t2jrbot',
       author_email='tuomasjjrasanen@tjjr.fi',
       url='http://tjjr.fi/sw/t2jrbot/',
       license='GPLv3+',
-      py_modules=['t2jrbot'],
+      package_dir={'t2jrbot': 'lib'},
+      packages=['t2jrbot', 't2jrbot.plugins'],
       scripts=["t2jrbot"],
       platforms=['Linux'],
       classifiers=[
@@ -26,4 +27,7 @@ setup(name='t2jrbot',
           "Programming Language :: Python :: 2.6",
           "Programming Language :: Python :: 2.7",
       ],
+      data_files=[
+        ("etc/t2jrbot", ["t2jrbot.conf"]),
+        ],
 )

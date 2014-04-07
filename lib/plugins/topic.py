@@ -29,8 +29,9 @@ class _TopicPlugin(object):
 
         self.__bot.add_irc_callback(self.__irc_topic_callback, command="TOPIC")
 
-        self.__bot.plugins["command"].register_command("!topic_log", self.__command_topic_log,
-                                                       "Show the topic log. Usage: !topic_log")
+        command_plugin = self.__bot.plugins["t2jrbot.plugins.command"]
+        command_plugin.register_command("!topic_log", self.__command_topic_log,
+                                        "Show the topic log. Usage: !topic_log")
 
     def __irc_topic_callback(self, prefix, cmd, params):
         channel, topic = params

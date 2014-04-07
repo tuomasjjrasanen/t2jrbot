@@ -28,23 +28,25 @@ class _AdminPlugin(object):
         self.__admins = set([self.__parse_admin_arg(a) for a in admins])
         self.__command_whitelist = set(command_whitelist)
 
-        self.__bot.plugins["command"].add_pre_eval_hook(self.__check_auth)
+        command_plugin = self.__bot.plugins["t2jrbot.plugins.command"]
 
-        self.__bot.plugins["command"].register_command("!admin_list",
-                                                       self.__command_admin_list,
-                                                       "List bot admins. Usage: !admin_list")
+        command_plugin.add_pre_eval_hook(self.__check_auth)
 
-        self.__bot.plugins["command"].register_command("!admin_add",
-                                                       self.__command_admin_add,
-                                                       "Add a bot admin. "
-                                                       "Usage: !admin_add NICK!USER@HOST, "
-                                                       "e.g. !admin_add fanatic!fan.atic@example.org")
+        command_plugin.register_command("!admin_list",
+                                        self.__command_admin_list,
+                                        "List bot admins. Usage: !admin_list")
 
-        self.__bot.plugins["command"].register_command("!admin_remove",
-                                                       self.__command_admin_remove,
-                                                       "Remove a bot admin. "
-                                                       "Usage: !admin_remove NICK!USER@HOST, "
-                                                       "e.g. !admin_remove fanatic!fan.atic@example.org")
+        command_plugin.register_command("!admin_add",
+                                        self.__command_admin_add,
+                                        "Add a bot admin. "
+                                        "Usage: !admin_add NICK!USER@HOST, "
+                                        "e.g. !admin_add fanatic!fan.atic@example.org")
+
+        command_plugin.register_command("!admin_remove",
+                                        self.__command_admin_remove,
+                                        "Remove a bot admin. "
+                                        "Usage: !admin_remove NICK!USER@HOST, "
+                                        "e.g. !admin_remove fanatic!fan.atic@example.org")
 
     def __check_auth(self, nick, host, channel, command, argstr):
         if ((command in self.__command_whitelist)
