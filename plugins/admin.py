@@ -20,21 +20,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import types
-
-def admin_eval_command(bot, nick, host, channel, command, argstr):
-    admin_plugin = bot.plugins["admin"]
-
-    if ((command in admin_plugin.command_whitelist)
-        or
-        ((nick, host) in admin_plugin.admins)):
-        return admin_plugin._orig_eval_command(nick, host, channel, command, argstr)
-
-    bot.irc.send_privmsg(channel,
-                         "%s: only admins are allowed to %s" % (nick, command))
-
-    return
-
 class AdminPlugin(object):
 
     def __init__(self, bot, admins, command_whitelist):
@@ -43,13 +28,7 @@ class AdminPlugin(object):
         self.admins = set([self.parse_admin_arg(a) for a in admins])
         self.command_whitelist = set(command_whitelist)
 
-        # We are going to replace the original eval_command() with our own
-        # which first checks whether the given command is is restricted only
-        # to admins and if so is it given by an admin. We store the original
-        # method so that we can use it for actually evaluating the command
-        # once it has passed our checks.
-        self._orig_eval_command = self.bot.plugins["command"].eval_command
-        self.bot.plugins["command"].eval_command = types.MethodType(admin_eval_command, bot)
+        self.bot.plugins["command"].add_pre_eval_hook(self.__check_auth)
 
         self.bot.plugins["command"].register_command("!admin_list",
                                                      self.command_admin_list,
@@ -66,6 +45,17 @@ class AdminPlugin(object):
                                                      "Remove a bot admin. "
                                                      "Usage: !admin_remove NICK!USER@HOST, "
                                                      "e.g. !admin_remove fanatic!fan.atic@example.org")
+
+    def __check_auth(self, nick, host, channel, command, argstr):
+        if ((command in self.command_whitelist)
+            or
+            ((nick, host) in self.admins)):
+            return True
+
+        self.bot.irc.send_privmsg(channel,
+                                  "%s: only admins are allowed to %s" % (nick, command))
+
+        return False
 
     def command_admin_list(self, nick, host, channel, this_command, argstr):
         admins = ["%s!%s" % (nick, host) for nick, host in self.admins]
