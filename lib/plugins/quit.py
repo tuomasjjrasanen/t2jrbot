@@ -20,6 +20,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import t2jrbot.conf
+
 class _QuitPlugin(object):
 
     def __init__(self, bot):
@@ -35,5 +37,10 @@ class _QuitPlugin(object):
         self.__bot.stop()
         self.__bot.irc.send_quit(argstr)
 
+def validate_conf(conf):
+    t2jrbot.conf.validate_keys(conf, ())
+
 def load(bot, conf):
+    validate_conf(conf)
+
     return _QuitPlugin(bot)
