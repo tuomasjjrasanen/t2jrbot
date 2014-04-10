@@ -27,3 +27,13 @@ def validate_keys(conf, valid_keys):
     if unknown_keys:
         raise t2jrbot.ConfError("unknown keys: %s" %
                                 ", ".join([repr(s) for s in unknown_keys]))
+
+def validate_value(conf, key, valid_value, required=True):
+    try:
+        value = conf[key]
+    except KeyError:
+        if required:
+            raise t2jrbot.ConfError("required key '%s' is missing" % key)
+    else:
+        if not valid_value(value):
+            raise t2jrbot.ConfError("key '%s' has invalid value" % key)

@@ -40,13 +40,8 @@ class _AutojoinPlugin(object):
 def validate_conf(conf):
     t2jrbot.conf.validate_keys(conf, ["channel"])
 
-    try:
-        channel = conf["channel"]
-    except KeyError:
-        raise t2jrbot.ConfError("missing required key 'channel'")
-    else:
-        if not isinstance(channel, str):
-            raise t2jrbot.ConfError("invalid 'channel' key, expected string")
+    t2jrbot.conf.validate_value(conf, "channel",
+                                lambda v: isinstance(v, str))
 
 def load(bot, conf):
     validate_conf(conf)

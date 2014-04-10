@@ -55,42 +55,21 @@ RE_PLUGIN = re.compile(r"^([a-zA-Z_][a-zA-Z_0-9]*)(\.[a-zA-Z_][a-zA-Z_0-9]*)*$")
 def validate_conf(conf):
     t2jrbot.conf.validate_keys(conf, ["server", "port", "nick", "plugins"])
 
-    try:
-        server = conf["server"]
-    except KeyError:
-        pass # Ok, optional key.
-    else:
-        if not isinstance(server, str):
-            raise t2jrbot.ConfError("invalid 'server' key, expected string")
+    t2jrbot.conf.validate_value(conf, "server",
+                                lambda v: isinstance(v, str), required=False)
 
-    try:
-        port = conf["port"]
-    except KeyError:
-        pass # Ok, optional key.
-    else:
-        if not isinstance(port, int) or port <= 0 or port >= 65536:
-            raise t2jrbot.ConfError("invalid 'port' key, "
-                                    "expected integer from range 1-65535")
+    t2jrbot.conf.validate_value(conf, "port",
+                                lambda v: isinstance(v, int) and 0 < v < 65536,
+                                required=False)
 
-    try:
-        nick = conf["nick"]
-    except KeyError:
-        pass # Ok, optional key.
-    else:
-        if not isinstance(nick, str):
-            raise t2jrbot.ConfError("invalid 'nick' key, expected string")
+    t2jrbot.conf.validate_value(conf, "nick",
+                                lambda v: isinstance(v, str),
+                                required=False)
 
-    try:
-        plugins = conf["plugins"]
-    except KeyError:
-        pass # Ok, optional key.
-    else:
-        if not isinstance(plugins, dict):
-            raise t2jrbot.ConfError("invalid 'plugins' key, expected mapping")
-        for plugin in plugins:
-            if not isinstance(plugin, str) or not RE_PLUGIN.match(plugin):
-                raise t2jrbot.ConfError("invalid plugin name '%s', "
-                                        "expected alphanumeric string" % plugin)
+    t2jrbot.conf.validate_value(conf, "plugins",
+                                lambda p: (isinstance(p, dict)
+                                           and all([isinstance(v, str) and RE_PLUGIN.match(v) for v in p])),
+                                required=False)
 
 def main():
     options = parse_args()

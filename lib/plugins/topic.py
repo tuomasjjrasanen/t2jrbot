@@ -54,15 +54,8 @@ class _TopicPlugin(object):
 def validate_conf(conf):
     t2jrbot.conf.validate_keys(conf, ["max_topic_log_len"])
 
-    try:
-        max_topic_log_len = conf["max_topic_log_len"]
-    except KeyError:
-        raise t2jrbot.ConfError("missing required key 'max_topic_log_len'")
-    else:
-        if (not isinstance(max_topic_log_len, int)
-            or max_topic_log_len < 0):
-            raise t2jrbot.ConfError("invalid 'max_topic_log_len' key, "
-                                    "expected integer >= 0")
+    t2jrbot.conf.validate_value(conf, "max_topic_log_len",
+                                lambda v: isinstance(v, int) and v >= 0)
 
 def load(bot, conf):
     validate_conf(conf)

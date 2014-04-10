@@ -85,29 +85,15 @@ class _AdminPlugin(object):
 def validate_conf(conf):
     t2jrbot.conf.validate_keys(conf, ["admins", "command_whitelist"])
 
-    try:
-        admins = conf["admins"]
-    except KeyError:
-        pass # Ok, optional key.
-    else:
-        if not isinstance(admins, list):
-            raise t2jrbot.ConfError("invalid 'admins' key, expected list")
-        for admin in admins:
-            if not isinstance(admin, str):
-                raise t2jrbot.ConfError("invalid admin '%s', "
-                                        "expected string" % admin)
+    t2jrbot.conf.validate_value(conf, "admins",
+                                lambda vs: (isinstance(vs, list)
+                                            and all([isinstance(v, str) for v in vs])),
+                                required=False)
 
-    try:
-        command_whitelist = conf["command_whitelist"]
-    except KeyError:
-        pass # Ok, optional key.
-    else:
-        if not isinstance(command_whitelist, list):
-            raise t2jrbot.ConfError("invalid 'command_whitelist' key, expected list")
-        for command in command_whitelist:
-            if not isinstance(command, str):
-                raise t2jrbot.ConfError("invalid command '%s', "
-                                        "expected string" % command)
+    t2jrbot.conf.validate_value(conf, "command_whitelist",
+                                lambda vs: (isinstance(vs, list)
+                                            and all([isinstance(v, str) for v in vs])),
+                                required=False)
 
 
 def load(bot, conf):

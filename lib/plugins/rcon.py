@@ -93,30 +93,14 @@ class _RconPlugin(object):
 def validate_conf(conf):
     t2jrbot.conf.validate_keys(conf, ["server", "port", "password"])
 
-    try:
-        server = conf["server"]
-    except KeyError:
-        raise t2jrbot.ConfError("missing required key 'server'")
-    else:
-        if not isinstance(server, str):
-            raise t2jrbot.ConfError("invalid 'server' key, expected string")
+    t2jrbot.conf.validate_value(conf, "server",
+                                lambda v: isinstance(v, str))
 
-    try:
-        port = conf["port"]
-    except KeyError:
-        raise t2jrbot.ConfError("missing required key 'port'")
-    else:
-        if not isinstance(port, int) or port <= 0 or port >= 65536:
-            raise t2jrbot.ConfError("invalid 'port' key, "
-                                    "expected integer from range 1-65535")
+    t2jrbot.conf.validate_value(conf, "port",
+                                lambda v: isinstance(v, int) and 0 < v < 65536)
 
-    try:
-        password = conf["password"]
-    except KeyError:
-        raise t2jrbot.ConfError("missing required key 'password'")
-    else:
-        if not isinstance(password, str):
-            raise t2jrbot.ConfError("invalid 'password' key, expected string")
+    t2jrbot.conf.validate_value(conf, "password",
+                                lambda v: isinstance(v, str))
 
 
 def load(bot, conf):
