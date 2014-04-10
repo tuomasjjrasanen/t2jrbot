@@ -20,6 +20,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import t2jrbot.conf
+
 class _PongPlugin(object):
 
     def __init__(self, bot):
@@ -30,5 +32,10 @@ class _PongPlugin(object):
     def __irc_ping(self, prefix, this_command, params):
         self.__bot.irc.send_pong(self.__bot.nick)
 
+def validate_conf(conf):
+    t2jrbot.conf.validate_keys(conf, ())
+
 def load(bot, conf):
+    validate_conf(conf)
+
     return _PongPlugin(bot)
