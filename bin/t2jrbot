@@ -107,6 +107,8 @@ def main():
     bot = t2jrbot.core.Bot(server, port, nick)
 
     for plugin_name, plugin_conf in plugins.items():
+        if plugin_conf is None:
+            plugin_conf = {}
         bot.load_plugin(plugin_name, plugin_conf)
 
     bot.run()
