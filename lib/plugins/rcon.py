@@ -94,14 +94,16 @@ def validate_conf(conf):
     t2jrbot.conf.validate_keys(conf, ["server", "port", "password"])
 
     t2jrbot.conf.validate_value(conf, "server",
-                                lambda v: isinstance(v, str))
+                                lambda v: isinstance(v, str),
+                                required=False)
 
     t2jrbot.conf.validate_value(conf, "port",
-                                lambda v: isinstance(v, int) and 0 < v < 65536)
+                                lambda v: isinstance(v, int) and 0 < v < 65536,
+                                required=False)
 
     t2jrbot.conf.validate_value(conf, "password",
-                                lambda v: isinstance(v, str))
-
+                                lambda v: isinstance(v, str),
+                                required=False)
 
 def load(bot, conf):
     validate_conf(conf)
