@@ -20,6 +20,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import t2jrbot
+
 class _AutojoinPlugin(object):
 
     def __init__(self, bot, channel):
@@ -35,6 +37,23 @@ class _AutojoinPlugin(object):
         self.__bot.nick = params[0]
         self.__bot.irc.send_join(self.__channel)
 
+def validate_conf(conf):
+    unknown_keys = set(conf.keys()) - set(["channel"])
+    if unknown_keys:
+        raise t2jrbot.ConfError("unknown keys: %s" %
+                                ", ".join([repr(s) for s in unknown_keys]))
+
+    try:
+        channel = conf["channel"]
+    except KeyError:
+        raise t2jrbot.ConfError("missing required key 'channel'")
+    else:
+        if not isinstance(channel, str):
+            raise t2jrbot.ConfError("invalid 'channel' key, expected string")
+
 def load(bot, conf):
-    channel = conf.get("channel", "#t2jrbot")
+    validate_conf(conf)
+
+    channel = conf["channel"]
+
     return _AutojoinPlugin(bot, channel)
