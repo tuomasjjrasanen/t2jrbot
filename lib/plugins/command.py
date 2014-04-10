@@ -20,6 +20,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import t2jrbot.conf
+
 class _CommandPlugin(object):
 
     def __init__(self, bot):
@@ -120,5 +122,10 @@ class _CommandPlugin(object):
                                         "%s: error: %s" % (nick, e.message))
 
 
+def validate_conf(conf):
+    t2jrbot.conf.validate_keys(conf, ())
+
 def load(bot, conf):
+    validate_conf(conf)
+
     return _CommandPlugin(bot)
