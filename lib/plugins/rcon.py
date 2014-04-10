@@ -22,6 +22,8 @@ from __future__ import print_function
 
 import subprocess
 
+import t2jrbot
+
 class _RconPlugin(object):
 
     def __init__(self, bot, server, port, password):
@@ -88,8 +90,43 @@ class _RconPlugin(object):
                                         "%s: There is not any game running at the moment." % nick)
             return
 
+def validate_conf(conf):
+    unknown_keys = set(conf.keys()) - set(["server", "port", "password"])
+    if unknown_keys:
+        raise t2jrbot.ConfError("unknown keys: %s" %
+                                ", ".join([repr(s) for s in unknown_keys]))
+
+    try:
+        server = conf["server"]
+    except KeyError:
+        raise t2jrbot.ConfError("missing required key 'server'")
+    else:
+        if not isinstance(server, str):
+            raise t2jrbot.ConfError("invalid 'server' key, expected string")
+
+    try:
+        port = conf["port"]
+    except KeyError:
+        raise t2jrbot.ConfError("missing required key 'port'")
+    else:
+        if not isinstance(port, int) or port <= 0 or port >= 65536:
+            raise t2jrbot.ConfError("invalid 'port' key, "
+                                    "expected integer from range 1-65535")
+
+    try:
+        password = conf["password"]
+    except KeyError:
+        raise t2jrbot.ConfError("missing required key 'password'")
+    else:
+        if not isinstance(password, str):
+            raise t2jrbot.ConfError("invalid 'password' key, expected string")
+
+
 def load(bot, conf):
+    validate_conf(conf)
+
     server = conf.get("server", "localhost")
     port = conf.get("port", 27960)
     password = conf.get("password", None)
+
     return _RconPlugin(bot, server, port, password)
