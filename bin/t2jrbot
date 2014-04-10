@@ -35,9 +35,6 @@ def parse_args():
                         help="configuration file")
     return parser.parse_args()
 
-class ConfError(Exception):
-    pass
-
 def parse_conf(filepath):
     with open(filepath) as conf_file:
         conf_yaml = conf_file.read()
@@ -45,10 +42,10 @@ def parse_conf(filepath):
     try:
         conf = yaml.safe_load(conf_yaml)
     except yaml.error.MarkedYAMLError, e1:
-        raise ConfError("invalid syntax near line %d, column %d" %
-                        (e1.problem_mark.line + 1, e1.problem_mark.column + 1))
+        raise t2jrbot.ConfError("invalid syntax near line %d, column %d" %
+                                (e1.problem_mark.line + 1, e1.problem_mark.column + 1))
     except yaml.error.YAMLError, e2:
-        raise ConfError("invalid syntax")
+        raise t2jrbot.ConfError("invalid syntax")
 
     return conf
 
@@ -57,27 +54,27 @@ RE_PLUGIN = re.compile(r"^([a-zA-Z_][a-zA-Z_0-9]*)(\.[a-zA-Z_][a-zA-Z_0-9]*)*$")
 def validate_conf(conf):
     unknown_keys = set(conf.keys()) - set(["server", "port", "nick", "plugins"])
     if unknown_keys:
-        raise ConfError("unknown keys: %s" %
-                        ", ".join([repr(s) for s in unknown_keys]))
+        raise t2jrbot.ConfError("unknown keys: %s" %
+                                ", ".join([repr(s) for s in unknown_keys]))
 
     if not isinstance(conf["server"], str):
-        raise ConfError("invalid 'server' key, expected string")
+        raise t2jrbot.ConfError("invalid 'server' key, expected string")
 
     port = conf["port"]
     if not isinstance(port, int) or port <= 0 or port >= 65536:
-        raise ConfError("invalid 'port' key, "
-                        "expected integer from range 1-65535")
+        raise t2jrbot.ConfError("invalid 'port' key, "
+                                "expected integer from range 1-65535")
 
     if not isinstance(conf["nick"], str):
-        raise ConfError("invalid 'nick' key, expected string")
+        raise t2jrbot.ConfError("invalid 'nick' key, expected string")
 
     if not isinstance(conf["plugins"], dict):
-        raise ConfError("invalid 'plugins' key, expected mapping")
+        raise t2jrbot.ConfError("invalid 'plugins' key, expected mapping")
 
     for plugin in conf["plugins"]:
         if not isinstance(plugin, str) or not RE_PLUGIN.match(plugin):
-            raise ConfError("invalid plugin name '%s', "
-                            "expected alphanumeric string" % plugin)
+            raise t2jrbot.ConfError("invalid plugin name '%s', "
+                                    "expected alphanumeric string" % plugin)
 
 def main():
     options = parse_args()
