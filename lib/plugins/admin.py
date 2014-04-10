@@ -81,7 +81,7 @@ class _AdminPlugin(object):
         return admin_nick, admin_host
 
 def load(bot, conf):
-    admins = conf.get("admins", "").splitlines()
-    command_whitelist = conf.get("command_whitelist", "").splitlines()
+    admins = conf.get("admins", [])
+    command_whitelist = conf.get("command_whitelist", [])
 
     return _AdminPlugin(bot, admins, command_whitelist)

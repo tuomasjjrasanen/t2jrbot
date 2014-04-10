@@ -28,6 +28,6 @@ setup(name='t2jrbot',
           "Programming Language :: Python :: 2.7",
       ],
       data_files=[
-        ("etc/t2jrbot", ["t2jrbot.conf"]),
+        ("etc/t2jrbot", ["t2jrbot.yaml"]),
         ],
 )

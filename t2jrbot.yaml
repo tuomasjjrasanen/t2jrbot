@@ -1,0 +1,11 @@
+server: "localhost"
+port: 6667
+nick: "t2jrbot"
+plugins:
+  command:
+  pong:
+  autojoin:
+    channel: "t2rjbot"
+  quit:
+  topic:
+    max_topic_log_len: 3

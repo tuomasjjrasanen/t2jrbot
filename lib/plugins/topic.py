@@ -50,5 +50,5 @@ class _TopicPlugin(object):
             self.__bot.irc.send_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
 def load(bot, conf):
-    max_topic_log_len = int(conf.get("max_topic_log_len", 3))
+    max_topic_log_len = conf.get("max_topic_log_len", 3)
     return _TopicPlugin(bot, max_topic_log_len)

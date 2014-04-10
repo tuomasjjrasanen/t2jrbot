@@ -90,6 +90,6 @@ class _RconPlugin(object):
 
 def load(bot, conf):
     server = conf.get("server", "localhost")
-    port = conf.get("port", "27960")
+    port = conf.get("port", 27960)
     password = conf.get("password", None)
     return _RconPlugin(bot, server, port, password)
