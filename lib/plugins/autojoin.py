@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import t2jrbot
+import t2jrbot.conf
 
 class _AutojoinPlugin(object):
 
@@ -38,10 +38,7 @@ class _AutojoinPlugin(object):
         self.__bot.irc.send_join(self.__channel)
 
 def validate_conf(conf):
-    unknown_keys = set(conf.keys()) - set(["channel"])
-    if unknown_keys:
-        raise t2jrbot.ConfError("unknown keys: %s" %
-                                ", ".join([repr(s) for s in unknown_keys]))
+    t2jrbot.conf.validate_keys(conf, ["channel"])
 
     try:
         channel = conf["channel"]

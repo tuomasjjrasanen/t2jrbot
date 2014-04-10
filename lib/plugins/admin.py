@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import t2jrbot
+import t2jrbot.conf
 
 class _AdminPlugin(object):
 
@@ -83,10 +83,7 @@ class _AdminPlugin(object):
         return admin_nick, admin_host
 
 def validate_conf(conf):
-    unknown_keys = set(conf.keys()) - set(["admins", "command_whitelist"])
-    if unknown_keys:
-        raise t2jrbot.ConfError("unknown keys: %s" %
-                                ", ".join([repr(s) for s in unknown_keys]))
+    t2jrbot.conf.validate_keys(conf, ["admins", "command_whitelist"])
 
     try:
         admins = conf["admins"]

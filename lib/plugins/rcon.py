@@ -22,7 +22,7 @@ from __future__ import print_function
 
 import subprocess
 
-import t2jrbot
+import t2jrbot.conf
 
 class _RconPlugin(object):
 
@@ -91,10 +91,7 @@ class _RconPlugin(object):
             return
 
 def validate_conf(conf):
-    unknown_keys = set(conf.keys()) - set(["server", "port", "password"])
-    if unknown_keys:
-        raise t2jrbot.ConfError("unknown keys: %s" %
-                                ", ".join([repr(s) for s in unknown_keys]))
+    t2jrbot.conf.validate_keys(conf, ["server", "port", "password"])
 
     try:
         server = conf["server"]

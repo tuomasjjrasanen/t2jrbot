@@ -27,6 +27,7 @@ import re
 
 import yaml
 
+import t2jrbot.conf
 import t2jrbot.core
 
 def parse_args():
@@ -52,10 +53,7 @@ def parse_conf(filepath):
 RE_PLUGIN = re.compile(r"^([a-zA-Z_][a-zA-Z_0-9]*)(\.[a-zA-Z_][a-zA-Z_0-9]*)*$")
 
 def validate_conf(conf):
-    unknown_keys = set(conf.keys()) - set(["server", "port", "nick", "plugins"])
-    if unknown_keys:
-        raise t2jrbot.ConfError("unknown keys: %s" %
-                                ", ".join([repr(s) for s in unknown_keys]))
+    t2jrbot.conf.validate_keys(conf, ["server", "port", "nick", "plugins"])
 
     try:
         server = conf["server"]

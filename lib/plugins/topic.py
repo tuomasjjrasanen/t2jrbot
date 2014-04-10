@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import t2jrbot
+import t2jrbot.conf
 
 class _TopicPlugin(object):
 
@@ -52,10 +52,7 @@ class _TopicPlugin(object):
             self.__bot.irc.send_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
 def validate_conf(conf):
-    unknown_keys = set(conf.keys()) - set(["max_topic_log_len"])
-    if unknown_keys:
-        raise t2jrbot.ConfError("unknown keys: %s" %
-                                ", ".join([repr(s) for s in unknown_keys]))
+    t2jrbot.conf.validate_keys(conf, ["max_topic_log_len"])
 
     try:
         max_topic_log_len = conf["max_topic_log_len"]
