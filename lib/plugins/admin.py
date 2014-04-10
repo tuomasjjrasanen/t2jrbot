@@ -20,6 +20,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import t2jrbot
+
 class _AdminPlugin(object):
 
     def __init__(self, bot, admins, command_whitelist):
@@ -80,7 +82,40 @@ class _AdminPlugin(object):
                              "be of form 'nick!user@example.org'")
         return admin_nick, admin_host
 
+def validate_conf(conf):
+    unknown_keys = set(conf.keys()) - set(["admins", "command_whitelist"])
+    if unknown_keys:
+        raise t2jrbot.ConfError("unknown keys: %s" %
+                                ", ".join([repr(s) for s in unknown_keys]))
+
+    try:
+        admins = conf["admins"]
+    except KeyError:
+        pass # Ok, optional key.
+    else:
+        if not isinstance(admins, list):
+            raise t2jrbot.ConfError("invalid 'admins' key, expected list")
+        for admin in admins:
+            if not isinstance(admin, str):
+                raise t2jrbot.ConfError("invalid admin '%s', "
+                                        "expected string" % admin)
+
+    try:
+        command_whitelist = conf["command_whitelist"]
+    except KeyError:
+        pass # Ok, optional key.
+    else:
+        if not isinstance(command_whitelist, list):
+            raise t2jrbot.ConfError("invalid 'command_whitelist' key, expected list")
+        for command in command_whitelist:
+            if not isinstance(command, str):
+                raise t2jrbot.ConfError("invalid command '%s', "
+                                        "expected string" % command)
+
+
 def load(bot, conf):
+    validate_conf(conf)
+
     admins = conf.get("admins", [])
     command_whitelist = conf.get("command_whitelist", [])
 
