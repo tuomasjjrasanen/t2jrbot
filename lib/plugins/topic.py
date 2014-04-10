@@ -20,6 +20,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import t2jrbot
+
 class _TopicPlugin(object):
 
     def __init__(self, bot, max_topic_log_len):
@@ -49,6 +51,25 @@ class _TopicPlugin(object):
         for i, topic in enumerate(topic_log):
             self.__bot.irc.send_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
+def validate_conf(conf):
+    unknown_keys = set(conf.keys()) - set(["max_topic_log_len"])
+    if unknown_keys:
+        raise t2jrbot.ConfError("unknown keys: %s" %
+                                ", ".join([repr(s) for s in unknown_keys]))
+
+    try:
+        max_topic_log_len = conf["max_topic_log_len"]
+    except KeyError:
+        raise t2jrbot.ConfError("missing required key 'max_topic_log_len'")
+    else:
+        if (not isinstance(max_topic_log_len, int)
+            or max_topic_log_len < 0):
+            raise t2jrbot.ConfError("invalid 'max_topic_log_len' key, "
+                                    "expected integer >= 0")
+
 def load(bot, conf):
+    validate_conf(conf)
+
     max_topic_log_len = conf.get("max_topic_log_len", 3)
+
     return _TopicPlugin(bot, max_topic_log_len)
