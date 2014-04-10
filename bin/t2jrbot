@@ -57,36 +57,54 @@ def validate_conf(conf):
         raise t2jrbot.ConfError("unknown keys: %s" %
                                 ", ".join([repr(s) for s in unknown_keys]))
 
-    if not isinstance(conf["server"], str):
-        raise t2jrbot.ConfError("invalid 'server' key, expected string")
+    try:
+        server = conf["server"]
+    except KeyError:
+        pass # Ok, optional key.
+    else:
+        if not isinstance(server, str):
+            raise t2jrbot.ConfError("invalid 'server' key, expected string")
 
-    port = conf["port"]
-    if not isinstance(port, int) or port <= 0 or port >= 65536:
-        raise t2jrbot.ConfError("invalid 'port' key, "
-                                "expected integer from range 1-65535")
+    try:
+        port = conf["port"]
+    except KeyError:
+        pass # Ok, optional key.
+    else:
+        if not isinstance(port, int) or port <= 0 or port >= 65536:
+            raise t2jrbot.ConfError("invalid 'port' key, "
+                                    "expected integer from range 1-65535")
 
-    if not isinstance(conf["nick"], str):
-        raise t2jrbot.ConfError("invalid 'nick' key, expected string")
+    try:
+        nick = conf["nick"]
+    except KeyError:
+        pass # Ok, optional key.
+    else:
+        if not isinstance(nick, str):
+            raise t2jrbot.ConfError("invalid 'nick' key, expected string")
 
-    if not isinstance(conf["plugins"], dict):
-        raise t2jrbot.ConfError("invalid 'plugins' key, expected mapping")
-
-    for plugin in conf["plugins"]:
-        if not isinstance(plugin, str) or not RE_PLUGIN.match(plugin):
-            raise t2jrbot.ConfError("invalid plugin name '%s', "
-                                    "expected alphanumeric string" % plugin)
+    try:
+        plugins = conf["plugins"]
+    except KeyError:
+        pass # Ok, optional key.
+    else:
+        if not isinstance(plugins, dict):
+            raise t2jrbot.ConfError("invalid 'plugins' key, expected mapping")
+        for plugin in plugins:
+            if not isinstance(plugin, str) or not RE_PLUGIN.match(plugin):
+                raise t2jrbot.ConfError("invalid plugin name '%s', "
+                                        "expected alphanumeric string" % plugin)
 
 def main():
     options = parse_args()
 
     conf = parse_conf(options.config_file)
 
-    server = conf.setdefault("server", "localhost")
-    port = conf.setdefault("port", 6667)
-    nick = conf.setdefault("nick", "t2jrbot")
-    plugins = conf.setdefault("plugins", {})
-
     validate_conf(conf)
+
+    server = conf.get("server", "localhost")
+    port = conf.get("port", 6667)
+    nick = conf.get("nick", "t2jrbot")
+    plugins = conf.get("plugins", {})
 
     bot = t2jrbot.core.Bot(server, port, nick)
 
