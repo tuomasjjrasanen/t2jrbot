@@ -46,7 +46,7 @@ class _RconPlugin(object):
             args.append("-p")
             args.append(self.__password)
         args.append("-P")
-        args.append(self.__port)
+        args.append("%d" % self.__port)
         args.append(self.__server)
         args.append(rcon_cmd)
 
