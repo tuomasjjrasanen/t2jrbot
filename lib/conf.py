@@ -22,13 +22,13 @@ from __future__ import print_function
 
 import t2jrbot
 
-def validate_keys(conf, valid_keys):
+def check_keys(conf, valid_keys):
     unknown_keys = set(conf.keys()) - set(valid_keys)
     if unknown_keys:
         raise t2jrbot.ConfError("unknown keys: %s" %
                                 ", ".join([repr(s) for s in unknown_keys]))
 
-def validate_value(conf, key, valid_value, required=True):
+def check_value(conf, key, valid_value, required=True):
     try:
         value = conf[key]
     except KeyError:

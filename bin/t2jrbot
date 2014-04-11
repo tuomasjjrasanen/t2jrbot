@@ -52,31 +52,31 @@ def parse_conf(filepath):
 
 RE_PLUGIN = re.compile(r"^([a-zA-Z_][a-zA-Z_0-9]*)(\.[a-zA-Z_][a-zA-Z_0-9]*)*$")
 
-def validate_conf(conf):
-    t2jrbot.conf.validate_keys(conf, ["server", "port", "nick", "plugins"])
+def check_conf(conf):
+    t2jrbot.conf.check_keys(conf, ["server", "port", "nick", "plugins"])
 
-    t2jrbot.conf.validate_value(conf, "server",
-                                lambda v: isinstance(v, str), required=False)
+    t2jrbot.conf.check_value(conf, "server",
+                             lambda v: isinstance(v, str), required=False)
 
-    t2jrbot.conf.validate_value(conf, "port",
-                                lambda v: isinstance(v, int) and 0 < v < 65536,
-                                required=False)
+    t2jrbot.conf.check_value(conf, "port",
+                             lambda v: isinstance(v, int) and 0 < v < 65536,
+                             required=False)
 
-    t2jrbot.conf.validate_value(conf, "nick",
-                                lambda v: isinstance(v, str),
-                                required=False)
+    t2jrbot.conf.check_value(conf, "nick",
+                             lambda v: isinstance(v, str),
+                             required=False)
 
-    t2jrbot.conf.validate_value(conf, "plugins",
-                                lambda p: (isinstance(p, dict)
-                                           and all([isinstance(v, str) and RE_PLUGIN.match(v) for v in p])),
-                                required=False)
+    t2jrbot.conf.check_value(conf, "plugins",
+                             lambda p: (isinstance(p, dict)
+                                        and all([isinstance(v, str) and RE_PLUGIN.match(v) for v in p])),
+                             required=False)
 
 def main():
     options = parse_args()
 
     conf = parse_conf(options.config_file)
 
-    validate_conf(conf)
+    check_conf(conf)
 
     server = conf.get("server", "localhost")
     port = conf.get("port", 6667)

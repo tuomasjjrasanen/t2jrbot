@@ -51,14 +51,14 @@ class _TopicPlugin(object):
         for i, topic in enumerate(topic_log):
             self.__bot.irc.send_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
-def validate_conf(conf):
-    t2jrbot.conf.validate_keys(conf, ["log_length"])
+def check_conf(conf):
+    t2jrbot.conf.check_keys(conf, ["log_length"])
 
-    t2jrbot.conf.validate_value(conf, "log_length",
-                                lambda v: isinstance(v, int) and v >= 0)
+    t2jrbot.conf.check_value(conf, "log_length",
+                             lambda v: isinstance(v, int) and v >= 0)
 
 def load(bot, conf):
-    validate_conf(conf)
+    check_conf(conf)
 
     log_length = conf.get("log_length", 3)
 

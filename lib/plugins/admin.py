@@ -82,22 +82,22 @@ class _AdminPlugin(object):
                              "be of form 'nick!user@example.org'")
         return admin_nick, admin_host
 
-def validate_conf(conf):
-    t2jrbot.conf.validate_keys(conf, ["admins", "command_whitelist"])
+def check_conf(conf):
+    t2jrbot.conf.check_keys(conf, ["admins", "command_whitelist"])
 
-    t2jrbot.conf.validate_value(conf, "admins",
-                                lambda vs: (isinstance(vs, list)
-                                            and all([isinstance(v, str) for v in vs])),
-                                required=False)
+    t2jrbot.conf.check_value(conf, "admins",
+                             lambda vs: (isinstance(vs, list)
+                                         and all([isinstance(v, str) for v in vs])),
+                             required=False)
 
-    t2jrbot.conf.validate_value(conf, "command_whitelist",
-                                lambda vs: (isinstance(vs, list)
-                                            and all([isinstance(v, str) for v in vs])),
-                                required=False)
+    t2jrbot.conf.check_value(conf, "command_whitelist",
+                             lambda vs: (isinstance(vs, list)
+                                         and all([isinstance(v, str) for v in vs])),
+                             required=False)
 
 
 def load(bot, conf):
-    validate_conf(conf)
+    check_conf(conf)
 
     admins = conf.get("admins", [])
     command_whitelist = conf.get("command_whitelist", [])

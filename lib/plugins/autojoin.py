@@ -37,14 +37,14 @@ class _AutojoinPlugin(object):
         self.__bot.nick = params[0]
         self.__bot.irc.send_join(self.__channel)
 
-def validate_conf(conf):
-    t2jrbot.conf.validate_keys(conf, ["channel"])
+def check_conf(conf):
+    t2jrbot.conf.check_keys(conf, ["channel"])
 
-    t2jrbot.conf.validate_value(conf, "channel",
-                                lambda v: isinstance(v, str))
+    t2jrbot.conf.check_value(conf, "channel",
+                             lambda v: isinstance(v, str))
 
 def load(bot, conf):
-    validate_conf(conf)
+    check_conf(conf)
 
     channel = conf["channel"]
 

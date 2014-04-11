@@ -90,23 +90,23 @@ class _RconPlugin(object):
                                         "%s: There is not any game running at the moment." % nick)
             return
 
-def validate_conf(conf):
-    t2jrbot.conf.validate_keys(conf, ["server", "port", "password"])
+def check_conf(conf):
+    t2jrbot.conf.check_keys(conf, ["server", "port", "password"])
 
-    t2jrbot.conf.validate_value(conf, "server",
-                                lambda v: isinstance(v, str),
-                                required=False)
+    t2jrbot.conf.check_value(conf, "server",
+                             lambda v: isinstance(v, str),
+                             required=False)
 
-    t2jrbot.conf.validate_value(conf, "port",
-                                lambda v: isinstance(v, int) and 0 < v < 65536,
-                                required=False)
+    t2jrbot.conf.check_value(conf, "port",
+                             lambda v: isinstance(v, int) and 0 < v < 65536,
+                             required=False)
 
-    t2jrbot.conf.validate_value(conf, "password",
-                                lambda v: isinstance(v, str),
-                                required=False)
+    t2jrbot.conf.check_value(conf, "password",
+                             lambda v: isinstance(v, str),
+                             required=False)
 
 def load(bot, conf):
-    validate_conf(conf)
+    check_conf(conf)
 
     server = conf.get("server", "localhost")
     port = conf.get("port", 27960)

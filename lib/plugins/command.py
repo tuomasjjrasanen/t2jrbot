@@ -122,10 +122,10 @@ class _CommandPlugin(object):
                                         "%s: error: %s" % (nick, e.message))
 
 
-def validate_conf(conf):
-    t2jrbot.conf.validate_keys(conf, ())
+def check_conf(conf):
+    t2jrbot.conf.check_keys(conf, ())
 
 def load(bot, conf):
-    validate_conf(conf)
+    check_conf(conf)
 
     return _CommandPlugin(bot)
