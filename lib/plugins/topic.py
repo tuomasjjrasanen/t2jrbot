@@ -24,10 +24,10 @@ import t2jrbot.conf
 
 class _TopicPlugin(object):
 
-    def __init__(self, bot, max_topic_log_len):
+    def __init__(self, bot, log_length):
         self.__bot = bot
         self.__topic_logs = {} # Maps channels to lists of topics.
-        self.__max_topic_log_len = max_topic_log_len
+        self.__log_length = log_length
 
         self.__bot.add_irc_callback(self.__irc_topic_callback, command="TOPIC")
 
@@ -40,7 +40,7 @@ class _TopicPlugin(object):
         nick, sep, host = prefix.partition("!")
         topic_log = self.__topic_logs.setdefault(channel, [])
         topic_log.insert(0, topic)
-        del topic_log[self.__max_topic_log_len:]
+        del topic_log[self.__log_length:]
 
     def __command_topic_log(self, nick, host, channel, command, argstr):
         try:
@@ -52,14 +52,14 @@ class _TopicPlugin(object):
             self.__bot.irc.send_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
 def validate_conf(conf):
-    t2jrbot.conf.validate_keys(conf, ["max_topic_log_len"])
+    t2jrbot.conf.validate_keys(conf, ["log_length"])
 
-    t2jrbot.conf.validate_value(conf, "max_topic_log_len",
+    t2jrbot.conf.validate_value(conf, "log_length",
                                 lambda v: isinstance(v, int) and v >= 0)
 
 def load(bot, conf):
     validate_conf(conf)
 
-    max_topic_log_len = conf.get("max_topic_log_len", 3)
+    log_length = conf.get("log_length", 3)
 
-    return _TopicPlugin(bot, max_topic_log_len)
+    return _TopicPlugin(bot, log_length)

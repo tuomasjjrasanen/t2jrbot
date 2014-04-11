@@ -8,4 +8,4 @@ plugins:
     channel: "t2rjbot"
   quit:
   topic:
-    max_topic_log_len: 3
+    log_length: 3
