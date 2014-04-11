@@ -60,7 +60,7 @@ class _TopicPlugin(object):
         except KeyError:
             self.__bot.irc.send_privmsg(channel, "%s: Topic log is empty." % nick)
             return
-        for i, topic in enumerate(topic_log):
+        for i, topic in enumerate(topic_log, 1):
             self.__bot.irc.send_privmsg(channel, "%s: %d: %s" % (nick, i, topic))
 
     def __command_topic_reset(self, nick, host, channel, command, argstr):
@@ -71,17 +71,18 @@ class _TopicPlugin(object):
             return
 
         try:
-            i = int(argstr)
+            number = int(argstr)
         except ValueError:
             self.__bot.irc.send_privmsg(channel,
                                         "%s: Invalid log entry number." % nick)
             return
 
-        if not 0 <= i < len(topic_log):
+        if not 0 < number <= len(topic_log):
             self.__bot.irc.send_privmsg(channel,
                                         "%s: Invalid log entry number." % nick)
             return
 
+        i = number - 1
         topic = topic_log[i]
         self.__bot.irc.send_topic(channel, topic)
 
