@@ -120,6 +120,12 @@ class IRC(object):
             quit_msg += " :%s" % reason
         self.send(quit_msg)
 
+    def send_topic(self, channel, topic=None):
+        if topic is None:
+            self.send("TOPIC %s" % channel)
+        else:
+            self.send("TOPIC %s %s" % (channel, topic))
+
     def send_user(self, user, realname):
         self.send("USER %s 0 * :%s" % (user, realname))
 
