@@ -20,14 +20,27 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import errno
+import os.path
+import pickle
+
 import t2jrbot.conf
 
 class _TopicPlugin(object):
+
+    _LOG_FILE = os.path.expanduser("~/.t2jrbot/plugins/topic/topic_logs")
 
     def __init__(self, bot, log_length):
         self.__bot = bot
         self.__topic_logs = {} # Maps channels to lists of topics.
         self.__log_length = log_length
+
+        if os.path.exists(_TopicPlugin._LOG_FILE):
+            with open(_TopicPlugin._LOG_FILE) as f:
+                topic_logs = pickle.load(f)
+            for lst in topic_logs.values():
+                del lst[self.__log_length:]
+            self.__topic_logs = topic_logs
 
         self.__bot.add_irc_callback(self.__irc_topic_callback, command="TOPIC")
 
@@ -40,7 +53,14 @@ class _TopicPlugin(object):
                                         "Usage: !topic_reset NUMBER")
 
     def release(self):
-        pass
+        try:
+            os.makedirs(os.path.dirname(_TopicPlugin._LOG_FILE))
+        except OSError, e:
+            # mkdir -p behavior
+            if e.errno != errno.EEXIST:
+                raise e
+        with open(_TopicPlugin._LOG_FILE, "w") as f:
+            pickle.dump(self.__topic_logs, f)
 
     def __irc_topic_callback(self, prefix, cmd, params):
         nick, sep, host = prefix.partition("!")
