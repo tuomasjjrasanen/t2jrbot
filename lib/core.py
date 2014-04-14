@@ -138,9 +138,7 @@ class IRC(object):
 
 class Bot(object):
 
-    def __init__(self, server, port, nick, plugins):
-        self.__server = server
-        self.__port = port
+    def __init__(self, nick, plugins):
         self.irc = IRC()
         self.nick = nick
         self.__is_stopping = False
@@ -186,9 +184,8 @@ class Bot(object):
         indices = self.__irc_callbacks_index_map.setdefault(key, [])
         indices.append(i)
 
-    def run(self):
-        self.irc.connect(self.__server, self.__port)
-
+    def run(self, server, port):
+        self.irc.connect(server, port)
         try:
             # Register connection.
             self.irc.send_nick(self.nick)
