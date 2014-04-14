@@ -33,6 +33,9 @@ class _QuitPlugin(object):
                                         "Usage: !quit [MESSAGE], "
                                         "e.g. !quit So Long, and Thanks for All the Fish!")
 
+    def release(self):
+        pass
+
     def __command_quit(self, nick, host, channel, this_command, argstr):
         self.__bot.stop()
         self.__bot.irc.send_quit(argstr)

@@ -39,6 +39,9 @@ class IRC(object):
         self.__recvbuf = ""
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    def close(self):
+        self.__sock.close()
+
     def connect(self, server, port):
         self.__sock.connect((server, port))
 
@@ -211,3 +214,21 @@ class Bot(object):
                         callback(prefix, command, params)
         finally:
             self.irc.shutdown()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Ensure all plugins get released.
+        for plugin in self.__plugins.values():
+            try:
+                plugin.release()
+            except:
+                # We do not care if the plugin fails at this point. We
+                # gave it the chance we had promised but it blew it.
+                continue
+
+        self.irc.close()
+
+        return False # Do not suppress the exception which caused the
+                     # exit.

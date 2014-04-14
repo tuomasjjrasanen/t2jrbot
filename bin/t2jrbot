@@ -83,9 +83,8 @@ def main():
     nick = conf.get("nick", "t2jrbot")
     plugins = conf.get("plugins", {})
 
-    bot = t2jrbot.core.Bot(nick, plugins)
-
-    bot.run(server, port)
+    with t2jrbot.core.Bot(nick, plugins) as bot:
+        bot.run(server, port)
 
 if __name__ == "__main__":
     main()

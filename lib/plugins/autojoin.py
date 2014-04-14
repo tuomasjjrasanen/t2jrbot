@@ -30,6 +30,9 @@ class _AutojoinPlugin(object):
 
         self.__bot.add_irc_callback(self.__irc_001, command="001")
 
+    def release(self):
+        pass
+
     def __irc_001(self, prefix, this_command, params):
         # Update the nick after successful connection because
         # the server might have truncated or otherwise modified

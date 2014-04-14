@@ -40,6 +40,9 @@ class _RconPlugin(object):
                                         "Say something in the game. "
                                         "Usage: !rcon_say Pizzas are here!")
 
+    def release(self):
+        pass
+
     def __crcon(self, rcon_cmd):
         args = ["crcon"]
         if self.__password:

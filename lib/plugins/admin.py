@@ -50,6 +50,9 @@ class _AdminPlugin(object):
                                         "Usage: !admin_remove NICK!USER@HOST, "
                                         "e.g. !admin_remove fanatic!fan.atic@example.org")
 
+    def release(self):
+        pass
+
     def __check_auth(self, nick, host, channel, command, argstr):
         if ((command in self.__command_whitelist)
             or

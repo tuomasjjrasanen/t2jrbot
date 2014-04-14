@@ -39,6 +39,9 @@ class _TopicPlugin(object):
                                         "of the specified log entry. "
                                         "Usage: !topic_reset NUMBER")
 
+    def release(self):
+        pass
+
     def __irc_topic_callback(self, prefix, cmd, params):
         nick, sep, host = prefix.partition("!")
         if nick == self.__bot.nick:

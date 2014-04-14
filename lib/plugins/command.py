@@ -36,6 +36,9 @@ class _CommandPlugin(object):
                               "Since you got this far, "
                               "you already know what this command does.")
 
+    def release(self):
+        pass
+
     def __command_help(self, nick, host, channel, this_command, argstr):
         command = argstr.strip()
         if not command:
