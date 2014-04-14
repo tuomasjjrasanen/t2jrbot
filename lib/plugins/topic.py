@@ -59,8 +59,12 @@ class _TopicPlugin(object):
             # mkdir -p behavior
             if e.errno != errno.EEXIST:
                 raise e
-        with open(_TopicPlugin._LOG_FILE, "w") as f:
-            pickle.dump(self.__topic_logs, f)
+        old_umask = os.umask(077)
+        try:
+            with open(_TopicPlugin._LOG_FILE, "w") as f:
+                pickle.dump(self.__topic_logs, f)
+        finally:
+            os.umask(old_umask)
 
     def __irc_topic_callback(self, prefix, cmd, params):
         nick, sep, host = prefix.partition("!")
