@@ -138,7 +138,7 @@ class IRC(object):
 
 class Bot(object):
 
-    def __init__(self, server, port, nick):
+    def __init__(self, server, port, nick, plugins):
         self.__server = server
         self.__port = port
         self.irc = IRC()
@@ -150,6 +150,14 @@ class Bot(object):
         self.__irc_callbacks = []
 
         self.add_irc_callback(self.__irc_error, command="ERROR")
+
+        for plugin_name, plugin_conf in plugins.items():
+            if plugin_conf is None:
+                plugin_conf = {}
+
+            plugin_module = importlib.import_module(plugin_name)
+            plugin = plugin_module.load(self, plugin_conf)
+            self.__plugins[plugin_name] = plugin
 
     def __irc_error(self, prefix, this_command, params):
         sys.exit(1)
@@ -206,13 +214,3 @@ class Bot(object):
                         callback(prefix, command, params)
         finally:
             self.irc.shutdown()
-
-    def load_plugin(self, plugin_name, conf):
-        if plugin_name in self.__plugins:
-            return False
-
-        plugin_module = importlib.import_module(plugin_name)
-        plugin = plugin_module.load(self, conf)
-        self.__plugins[plugin_name] = plugin
-
-        return True
