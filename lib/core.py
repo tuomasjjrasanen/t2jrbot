@@ -150,6 +150,9 @@ class Bot(object):
         self.__irc_callbacks_index_map = {}
         self.__irc_callbacks = []
 
+        self.__readables = set([self.irc])
+        self.__readable_callbacks = {}
+
         self.add_irc_callback(self.__irc_error, command="ERROR")
 
         for plugin_name, plugin_conf in plugins.items():
@@ -158,6 +161,14 @@ class Bot(object):
 
             plugin_module = importlib.import_module(plugin_name)
             plugin = plugin_module.load(self, plugin_conf)
+            try:
+                plugin_readables = plugin.readables
+            except AttributeError:
+                pass
+            else:
+                self.__readables.update(plugin_readables)
+                for readable in plugin_readables:
+                    self.__readable_callbacks.setdefault(readable, []).append(plugin.readable_ready)
             self.__plugins[plugin_name] = plugin
 
     def __irc_error(self, prefix, this_command, params):
@@ -195,23 +206,32 @@ class Bot(object):
             self.irc.send_user(self.nick, self.nick)
 
             while not self.__is_stopping:
-                rs, _, _ = select.select([self.irc], [], [])
+                readables, _, _ = select.select(self.__readables, [], [])
 
-                # Read socket buffer, parse messages and handle them.
-                messages = self.irc.recv()
+                for readable in readables:
+                    if readable is self.irc:
+                        # Read socket buffer, parse messages and handle
+                        # them.
+                        messages = self.irc.recv()
 
-                for prefix, command, params in messages:
-                    callback_indices = set()
+                        for prefix, command, params in messages:
+                            callback_indices = set()
 
-                    callback_indices.update(
-                        self.__irc_callbacks_index_map.get((None, None), set()),
-                        self.__irc_callbacks_index_map.get((prefix, None), set()),
-                        self.__irc_callbacks_index_map.get((None, command), set()),
-                        self.__irc_callbacks_index_map.get((prefix, command), set()))
+                            callback_indices.update(
+                                self.__irc_callbacks_index_map.get((None, None), set()),
+                                self.__irc_callbacks_index_map.get((prefix, None), set()),
+                                self.__irc_callbacks_index_map.get((None, command), set()),
+                                self.__irc_callbacks_index_map.get((prefix, command), set()))
 
-                    for callback_index in sorted(callback_indices):
-                        callback = self.__irc_callbacks[callback_index]
-                        callback(prefix, command, params)
+                            for callback_index in sorted(callback_indices):
+                                callback = self.__irc_callbacks[callback_index]
+                                callback(prefix, command, params)
+
+                        continue
+                    else:
+                        for callback in self.__readable_callbacks[readable]:
+                            callback(readable)
+
         finally:
             self.irc.shutdown()
 
