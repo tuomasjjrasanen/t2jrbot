@@ -33,7 +33,7 @@ class _RconPlugin(object):
         self.__port = port
         self.__password = password
         self.__game_log = game_log
-        self.__readables = []
+        self.readables = []
 
         command_plugin = self.__bot.plugins["t2jrbot.plugins.command"]
         command_plugin.register_command("!rcon_status", self.__command_rcon_status,
@@ -44,7 +44,7 @@ class _RconPlugin(object):
                                         "Usage: !rcon_say Pizzas are here!")
 
         if self.__game_log:
-            self.__readables.append(open(self.__game_log))
+            self.readables.append(open(self.__game_log))
 
     def readable_ready(self, readable):
         print("blob")
