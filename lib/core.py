@@ -171,6 +171,8 @@ class Bot(object):
                     self.__readable_callbacks.setdefault(readable, []).append(plugin.readable_ready)
             self.__plugins[plugin_name] = plugin
 
+        print(self.__readables)
+
     def __irc_error(self, prefix, this_command, params):
         sys.exit(1)
 
@@ -207,7 +209,7 @@ class Bot(object):
 
             while not self.__is_stopping:
                 readables, _, _ = select.select(self.__readables, [], [])
-
+                print(readables)
                 for readable in readables:
                     if readable is self.irc:
                         # Read socket buffer, parse messages and handle
