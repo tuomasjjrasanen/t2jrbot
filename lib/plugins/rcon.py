@@ -20,17 +20,20 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os.path
 import subprocess
 
 import t2jrbot.conf
 
 class _RconPlugin(object):
 
-    def __init__(self, bot, server, port, password):
+    def __init__(self, bot, server, port, password, game_log):
         self.__bot = bot
         self.__server = server
         self.__port = port
         self.__password = password
+        self.__game_log = game_log
+        self.__readables = []
 
         command_plugin = self.__bot.plugins["t2jrbot.plugins.command"]
         command_plugin.register_command("!rcon_status", self.__command_rcon_status,
@@ -39,6 +42,12 @@ class _RconPlugin(object):
         command_plugin.register_command("!rcon_say", self.__command_rcon_say,
                                         "Say something in the game. "
                                         "Usage: !rcon_say Pizzas are here!")
+
+        if self.__game_log:
+            self.__readables.append(open(self.__game_log))
+
+    def readable_ready(self, readable):
+        print("blob")
 
     def release(self):
         pass
@@ -94,7 +103,7 @@ class _RconPlugin(object):
             return
 
 def check_conf(conf):
-    t2jrbot.conf.check_keys(conf, ["server", "port", "password"])
+    t2jrbot.conf.check_keys(conf, ["server", "port", "password", "game_log"])
 
     t2jrbot.conf.check_value(conf, "server",
                              lambda v: isinstance(v, str),
@@ -108,11 +117,16 @@ def check_conf(conf):
                              lambda v: isinstance(v, str),
                              required=False)
 
+    t2jrbot.conf.check_value(conf, "game_log",
+                             lambda v: isinstance(v, str),
+                             required=False)
+
 def load(bot, conf):
     check_conf(conf)
 
     server = conf.get("server", "localhost")
     port = conf.get("port", 27960)
     password = conf.get("password", None)
+    game_log = conf.get("game_log", None)
 
-    return _RconPlugin(bot, server, port, password)
+    return _RconPlugin(bot, server, port, password, game_log)
