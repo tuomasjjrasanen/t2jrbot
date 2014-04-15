@@ -14,6 +14,7 @@ Requirements
 ============
 
 - Python2.7
+- python-yaml
 
 Installation
 ============

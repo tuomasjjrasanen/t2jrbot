@@ -15,6 +15,7 @@ setup(name='t2jrbot',
       license='GPLv3+',
       package_dir={'t2jrbot': 'lib'},
       packages=['t2jrbot', 't2jrbot.plugins'],
+      requires=['yaml'],
       scripts=["bin/t2jrbot"],
       platforms=['Linux'],
       classifiers=[
