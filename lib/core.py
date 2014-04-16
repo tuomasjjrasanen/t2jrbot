@@ -166,10 +166,11 @@ class Bot(object):
             except AttributeError:
                 pass
             else:
-                self.__readables.update(plugin_readables)
                 for readable in plugin_readables:
-                    self.__readable_callbacks.setdefault(readable, []).append(plugin.readable_ready)
-            self.__plugins[plugin_name] = plugin
+                    if readable in self.__readable_callbacks:
+                        raise RuntimeError("readable callback already registered")
+                    self.__readable_callbacks[readable] = plugin.readable_ready
+                self.__plugins[plugin_name] = plugin
 
         print(self.__readables)
 
@@ -231,8 +232,7 @@ class Bot(object):
 
                         continue
                     else:
-                        for callback in self.__readable_callbacks[readable]:
-                            callback(readable)
+                        self.__readable_callbacks[readable](readable)
 
         finally:
             self.irc.shutdown()

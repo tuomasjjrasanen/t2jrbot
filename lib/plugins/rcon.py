@@ -47,7 +47,7 @@ class _RconPlugin(object):
             self.readables.append(open(self.__game_log))
 
     def readable_ready(self, readable):
-        print("blob")
+        print(readable.read())
 
     def release(self):
         pass
