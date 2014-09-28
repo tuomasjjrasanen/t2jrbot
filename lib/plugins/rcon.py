@@ -20,17 +20,25 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
+import re
+import select
 import subprocess
+import threading
 
 import t2jrbot.conf
 
+_CLIENT_CONNECT_PATTERN = re.compile(r"^\s*\d+:\d+\s*ClientConnect: \d+, Name: (.*), .*$")
+
 class _RconPlugin(object):
 
-    def __init__(self, bot, server, port, password):
+    def __init__(self, bot, server, port, password, gamelog, gamelog_channels):
         self.__bot = bot
         self.__server = server
         self.__port = port
         self.__password = password
+        self.__gamelog = gamelog
+        self.__gamelog_channels = gamelog_channels
 
         command_plugin = self.__bot.plugins["t2jrbot.plugins.command"]
         command_plugin.register_command("!rcon_status", self.__command_rcon_status,
@@ -40,8 +48,38 @@ class _RconPlugin(object):
                                         "Say something in the game. "
                                         "Usage: !rcon_say Pizzas are here!")
 
+        self.__gamelog_monitor = None
+        if self.__gamelog:
+            self.__gamelog_monitor = threading.Thread(target=self.__monitor_gamelog)
+            self.__gamelog_monitor_rpipe, self.__gamelog_monitor_wpipe = os.pipe()
+            self.__gamelog_monitor.start()
+
+    def __monitor_gamelog(self):
+        with open(self.__gamelog) as gamelog_file:
+            gamelog_file.seek(0, 2) # Ignore existing, historical,
+                                    # content. We care only about new
+                                    # events.
+            while True:
+                # Loop forever.
+                rds = [gamelog_file, self.__gamelog_monitor_rpipe]
+                rds, _, _ = select.select(rds, [], [])
+                if gamelog_file in rds:
+                    for line in gamelog_file.readlines():
+                        match = _CLIENT_CONNECT_PATTERN.match(line)
+                        if match:
+                            name = match.group(1)
+                            for channel in self.__gamelog_channels:
+                                self.__bot.irc.send_privmsg(channel,
+                                                            "%s connected."
+                                                            % name)
+                if self.__gamelog_monitor_rpipe in rds:
+                    # Stop monitoring.
+                    break
+
     def release(self):
-        pass
+        if self.__gamelog_monitor is not None:
+            os.close(self.__gamelog_monitor_wpipe) # Stop monitoring.
+            self.__gamelog_monitor.join()
 
     def __crcon(self, rcon_cmd):
         args = ["crcon"]
@@ -94,7 +132,8 @@ class _RconPlugin(object):
             return
 
 def check_conf(conf):
-    t2jrbot.conf.check_keys(conf, ["server", "port", "password"])
+    t2jrbot.conf.check_keys(conf, ["server", "port", "password",
+                                   "gamelog", "gamelog_channels"])
 
     t2jrbot.conf.check_value(conf, "server",
                              lambda v: isinstance(v, str),
@@ -108,11 +147,22 @@ def check_conf(conf):
                              lambda v: isinstance(v, str),
                              required=False)
 
+    t2jrbot.conf.check_value(conf, "gamelog",
+                             lambda v: isinstance(v, str),
+                             required=False)
+
+    t2jrbot.conf.check_value(conf, "gamelog_channels",
+                             lambda vs: (isinstance(vs, list)
+                                         and all([isinstance(v, str) for v in vs])),
+                             required=False)
+
 def load(bot, conf):
     check_conf(conf)
 
     server = conf.get("server", "localhost")
     port = conf.get("port", 27960)
     password = conf.get("password", None)
+    gamelog = conf.get("gamelog", None)
+    gamelog_channels = conf.get("gamelog_channels", [])
 
-    return _RconPlugin(bot, server, port, password)
+    return _RconPlugin(bot, server, port, password, gamelog, gamelog_channels)
